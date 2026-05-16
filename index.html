@@ -1282,6 +1282,8 @@ tr.row-loss td:first-child{border-right:3px solid var(--red)}
 .mkt-flag { font-size: 1rem; }
 .market-content { display: none; }
 .market-content.active { display: block; }
+.us-tab-content { display: none; }
+.us-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
 /* ===== جدول المحفظة الشاملة ===== */
 .combined-badge-sa { background: rgba(232,160,32,0.15); color: var(--accent); border: 1px solid rgba(232,160,32,0.3); border-radius: 5px; padding: 2px 7px; font-size: 0.72rem; font-weight: 700; }
 .combined-badge-us { background: rgba(78,157,240,0.15); color: var(--blue); border: 1px solid rgba(78,157,240,0.3); border-radius: 5px; padding: 2px 7px; font-size: 0.72rem; font-weight: 700; }
@@ -1330,32 +1332,35 @@ tr.row-loss td:first-child{border-right:3px solid var(--red)}
 <button class="nav-btn" onclick="switchTab('settings')">الإعدادات</button>
 
 </nav>
-<nav id="nav-us" style="display:none"><button class="nav-btn active" id="us-nav-dashboard" onclick="switchUsTab('dashboard')">لوحة التحكم</button><button class="nav-btn" id="us-nav-portfolio" onclick="switchUsTab('portfolio')">محفظتي</button><button class="nav-btn" id="us-nav-transactions" onclick="switchUsTab('transactions')">العمليات</button></nav>
+<nav id="nav-us" style="display:none">
+<button class="nav-btn active" id="us-nav-dashboard" onclick="switchUsTab('dashboard')">لوحة التحكم</button>
+<button class="nav-btn" id="us-nav-portfolio" onclick="switchUsTab('portfolio')">محفظتي</button>
+<button class="nav-btn" id="us-nav-transactions" onclick="switchUsTab('transactions')">العمليات</button>
+<button class="nav-btn" id="us-nav-dividends" onclick="switchUsTab('dividends')">التوزيعات</button>
+<button class="nav-btn" id="us-nav-settings" onclick="switchUsTab('settings')">الإعدادات</button>
+</nav>
 
 
 
-<div class="header-actions">
-
+<!-- أزرار السوق السعودي -->
+<div class="header-actions" id="header-actions-saudi">
 <div class="cash-pill" onclick="openCashModal()">
-
 <span class="label">💵 كاش:</span>
-
 <span class="val" id="header-cash">0.00</span>
-
 <span class="label">ر.س</span>
-
+</div>
+<div class="btn-icon" onclick="refreshAllPrices()" title="تحديث الأسعار"><span id="refresh-icon">⟳</span></div>
+<div class="btn-icon" onclick="openAddModal()" title="إضافة سهم">+</div>
 </div>
 
-<div class="btn-icon" onclick="refreshAllPrices()" title="تحديث الأسعار">
-
-<span id="refresh-icon">⟳</span>
-
+<!-- أزرار السوق الأمريكي -->
+<div class="header-actions" id="header-actions-us" style="display:none">
+<div class="cash-pill" onclick="openUsCashModal()" style="cursor:pointer">
+<span class="label">💵 كاش:</span>
+<span class="val" id="header-us-cash">$0.00</span>
 </div>
-
-<div class="btn-icon" onclick="openAddModal()" title="إضافة سهم">+</div>
-
-<div class="btn-icon" onclick="openAddModal()" title="إضافة سهم">+</div>
-
+<div class="btn-icon" onclick="refreshAllUsPrices()" title="تحديث الأسعار الأمريكية"><span id="us-refresh-icon-hdr">⟳</span></div>
+<div class="btn-icon" onclick="openUsAddModal()" title="إضافة سهم أمريكي">+</div>
 </div>
 
 </header>
@@ -2120,13 +2125,14 @@ oninput="saveTasiBaselineSettings()">
 </main></div>
 
 <!-- ========== السوق الأمريكي ========== -->
-<div id="market-us-content" class="market-content">
+<div id="market-us-content" class="market-content" style="display:none">
 <main>
 
 <!-- ══ US Dashboard ══ -->
-<div class="tab-content active" id="us-tab-dashboard">
+<div class="us-tab-content active" id="us-tab-dashboard">
 
-<div class="us-dash-grid" id="us-dash-cards">
+<!-- KPI Cards -->
+<div class="dash-grid" id="us-dash-cards">
   <div class="stat-card gold">
     <div class="stat-label">إجمالي قيمة المحفظة (USD)</div>
     <div class="stat-value text-accent" id="us-total-value">$0.00</div>
@@ -2134,43 +2140,125 @@ oninput="saveTasiBaselineSettings()">
     <div class="stat-sub" id="us-total-value-sar" style="color:var(--accent);font-size:0.78rem">—</div>
     <div class="stat-icon">💼</div>
   </div>
-  <div class="stat-card green">
+  <div class="stat-card" id="us-pnl-card">
     <div class="stat-label">الربح / الخسارة غير المحقق</div>
     <div class="stat-value" id="us-total-pnl">$0.00</div>
     <div class="stat-sub" id="us-pnl-pct-sub">0.00%</div>
     <div class="stat-sub" id="us-pnl-sar" style="font-size:0.78rem">—</div>
-    <div class="stat-icon">📈</div>
+    <div class="stat-icon">📊</div>
   </div>
   <div class="stat-card blue">
-    <div class="stat-label">عدد الأسهم</div>
-    <div class="stat-value text-blue" id="us-holdings-count">0</div>
-    <div class="stat-sub">سهم أمريكي</div>
-    <div class="stat-icon">🏦</div>
-  </div>
-  <div class="stat-card">
     <div class="stat-label">الكاش المتاح (USD)</div>
-    <div class="stat-value" id="us-cash-display">$0.00</div>
+    <div class="stat-value text-blue" id="us-cash-display">$0.00</div>
     <div class="stat-sub"><button class="btn btn-ghost btn-sm" onclick="openUsCashModal()" style="font-size:0.72rem;padding:0.2rem 0.5rem">تعديل</button></div>
     <div class="stat-icon">💵</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-label">التوزيعات المحصّلة</div>
+    <div class="stat-value text-accent" id="us-total-dividends">$0.00</div>
+    <div class="stat-sub text-muted">إجمالي بالدولار</div>
+    <div class="stat-icon">🏦</div>
+  </div>
 </div>
 
-<div class="section-header">
-  <div class="section-title">أبرز <span>الأسهم الأمريكية</span></div>
-  <button class="btn btn-ghost btn-sm" onclick="refreshAllUsPrices()">
-    <span id="us-refresh-icon">⟳</span> تحديث الأسعار
-  </button>
+<!-- Asset Split Bar -->
+<div class="card" style="padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+  <div style="font-size:0.78rem;color:var(--text-2);font-weight:600;white-space:nowrap">توزيع الأصول</div>
+  <div style="flex:1;min-width:120px">
+    <div id="us-asset-split-bar" style="height:10px;border-radius:5px;overflow:hidden;background:var(--bg-elevated);display:flex"></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(78,157,240,0.1);border:1px solid rgba(78,157,240,0.2);border-radius:8px;padding:0.4rem 0.75rem">
+    <span style="width:8px;height:8px;border-radius:2px;background:#4e9df0;display:inline-block;flex-shrink:0"></span>
+    <div>
+      <div style="font-size:0.7rem;color:var(--text-2)">قيمة الأسهم</div>
+      <div style="font-size:0.88rem;font-weight:700;color:#4e9df0;direction:ltr" id="us-stocks-value-sm">$0.00</div>
+    </div>
+    <div style="font-size:1rem;font-weight:800;color:#4e9df0;margin-right:0.25rem" id="us-stocks-pct">0%</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.5rem;background:rgba(34,201,122,0.1);border:1px solid rgba(34,201,122,0.2);border-radius:8px;padding:0.4rem 0.75rem">
+    <span style="width:8px;height:8px;border-radius:2px;background:#22c97a;display:inline-block;flex-shrink:0"></span>
+    <div>
+      <div style="font-size:0.7rem;color:var(--text-2)">الكاش</div>
+      <div style="font-size:0.88rem;font-weight:700;color:#22c97a;direction:ltr" id="us-cash-value-sm">$0.00</div>
+    </div>
+    <div style="font-size:1rem;font-weight:800;color:#22c97a;margin-right:0.25rem" id="us-cash-pct">0%</div>
+  </div>
 </div>
-<div class="card-lg" style="padding:1.25rem">
-  <div class="table-wrap" id="us-top-table-wrap">
-    <div class="empty-state"><div class="icon">🇺🇸</div><p>لا توجد أسهم أمريكية بعد</p><button class="btn btn-primary" onclick="openUsAddModal()">+ أضف سهمك الأول</button></div>
+
+<!-- S&P 500 Comparison Widget -->
+<div class="card" style="margin-bottom:1.25rem;padding:1.25rem">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+    <div style="font-size:1rem;font-weight:700;color:var(--blue)">
+      📈 مقارنة S&P 500
+      <span id="sp-live-badge" style="display:none;font-size:0.65rem;background:rgba(34,201,122,0.15);color:var(--green);border:1px solid rgba(34,201,122,0.3);border-radius:4px;padding:2px 6px;margin-right:6px;vertical-align:middle">● مباشر</span>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="fetchAndRenderSP()" style="font-size:0.75rem">⟳ جلب S&P 500</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.65rem;margin-bottom:0.9rem">
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;text-align:center">
+      <div style="font-size:0.68rem;color:var(--text-2);margin-bottom:0.3rem;font-weight:600">🇺🇸 S&P 500 الحالي</div>
+      <div style="font-size:1.15rem;font-weight:800;color:#4e9df0;direction:ltr" id="sp-current">—</div>
+      <div style="font-size:0.7rem;margin-top:0.2rem" id="sp-change-today" style="color:var(--text-3)">—</div>
+    </div>
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;text-align:center">
+      <div style="font-size:0.68rem;color:var(--text-2);margin-bottom:0.3rem;font-weight:600">📅 S&P 500 منذ التأسيس</div>
+      <div style="font-size:1.15rem;font-weight:800;direction:ltr" id="sp-since-val">—</div>
+      <div style="font-size:0.7rem;margin-top:0.2rem;color:var(--text-3)" id="sp-baseline-disp">أدخل قيمة البداية</div>
+    </div>
+    <div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.75rem;text-align:center">
+      <div style="font-size:0.68rem;color:var(--text-2);margin-bottom:0.3rem;font-weight:600">💼 عائد محفظتي</div>
+      <div style="font-size:1.15rem;font-weight:800;direction:ltr" id="us-portfolio-return">—</div>
+      <div style="font-size:0.7rem;margin-top:0.2rem;color:var(--text-3)" id="us-portfolio-return-sub">غير محقق</div>
+    </div>
+    <div style="background:var(--bg-elevated);border:1px solid rgba(232,160,32,0.2);border-radius:var(--radius-sm);padding:0.75rem;text-align:center">
+      <div style="font-size:0.68rem;color:var(--text-2);margin-bottom:0.3rem;font-weight:600">⚡ الأداء الزائد (Alpha)</div>
+      <div style="font-size:1.15rem;font-weight:800;direction:ltr" id="us-alpha-val">—</div>
+      <div style="font-size:0.7rem;margin-top:0.2rem" id="us-alpha-sub" style="color:var(--text-3)">مقارنة بـ S&P 500</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;padding-top:0.75rem;border-top:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:0.4rem">
+      <span style="font-size:0.75rem;color:var(--text-2);white-space:nowrap">S&P 500 وقت بداية المحفظة:</span>
+      <input type="number" id="sp-baseline-input" placeholder="مثال: 5000" oninput="saveSpBaseline()"
+        style="width:110px;padding:0.3rem 0.5rem;background:var(--bg-input);border:1px solid var(--border-light);border-radius:6px;color:var(--text-1);font-size:0.8rem;direction:ltr;outline:none">
+    </div>
+    <span style="font-size:0.7rem;color:var(--text-3)">💡 ابحث عن قيمة S&P 500 في أي تاريخ سابق عبر Google Finance أو Investing.com</span>
+  </div>
+</div>
+
+<!-- Top Stocks + Allocation Chart -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+  <div>
+    <div class="section-header" style="margin-bottom:0.75rem">
+      <div class="section-title">أبرز <span>الأسهم الأمريكية</span></div>
+      <div style="display:flex;gap:0.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="refreshAllUsPrices()"><span id="us-refresh-icon">⟳</span> تحديث</button>
+        <button class="btn btn-primary btn-sm" onclick="openUsAddModal()">+ إضافة</button>
+      </div>
+    </div>
+    <div class="card-lg" style="padding:1.25rem">
+      <div class="table-wrap" id="us-top-table-wrap">
+        <div class="empty-state"><div class="icon">🇺🇸</div><p>لا توجد أسهم أمريكية بعد</p><button class="btn btn-primary" onclick="openUsAddModal()">+ أضف سهمك الأول</button></div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="section-header" style="margin-bottom:0.75rem">
+      <div class="section-title">توزيع <span>المحفظة</span></div>
+    </div>
+    <div class="card-lg" style="padding:1.25rem">
+      <div class="pie-chart-wrap">
+        <canvas id="us-pie-chart" width="160" height="160"></canvas>
+        <div class="pie-legend" id="us-pie-legend"></div>
+      </div>
+    </div>
   </div>
 </div>
 
 </div><!-- end us-tab-dashboard -->
 
 <!-- ══ US Portfolio Table ══ -->
-<div class="tab-content" id="us-tab-portfolio" style="display:none">
+<div class="us-tab-content" id="us-tab-portfolio">
 <div class="section-header">
   <div class="section-title">محفظتي <span>الأمريكية</span></div>
   <div style="display:flex;gap:0.5rem">
@@ -2184,22 +2272,106 @@ oninput="saveTasiBaselineSettings()">
 </div><!-- end us-tab-portfolio -->
 
 <!-- ══ US Transactions ══ -->
-<div class="tab-content" id="us-tab-transactions" style="display:none">
+<div class="us-tab-content" id="us-tab-transactions">
 <div class="section-header">
   <div class="section-title">سجل <span>العمليات الأمريكية</span></div>
+</div>
+<!-- Stats Row -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem">
+  <div class="rs-card"><div class="rs-label">💰 إجمالي الأرباح المحققة</div><div class="rs-value text-green" id="us-rs-total-win">$0.00</div><div class="rs-sub" id="us-rs-win-count">0 صفقة</div></div>
+  <div class="rs-card"><div class="rs-label">📉 إجمالي الخسائر المحققة</div><div class="rs-value text-red" id="us-rs-total-loss">$0.00</div><div class="rs-sub" id="us-rs-loss-count">0 صفقة</div></div>
+  <div class="rs-card"><div class="rs-label">📊 صافي الربح المحقق</div><div class="rs-value" id="us-rs-net-pnl">$0.00</div><div class="rs-sub" id="us-rs-net-pct">—</div></div>
+  <div class="rs-card"><div class="rs-label">🎯 نسبة نجاح الصفقات</div><div class="rs-value text-accent" id="us-rs-win-rate">—</div><div class="rs-sub" id="us-rs-trades-total">0 صفقة مغلقة</div></div>
 </div>
 <div class="table-wrap" id="us-tx-table-wrap">
   <div class="empty-state"><div class="icon">📋</div><p>لا توجد عمليات بعد</p></div>
 </div>
 </div><!-- end us-tab-transactions -->
 
+<!-- ══ US Dividends ══ -->
+<div class="us-tab-content" id="us-tab-dividends">
+<div class="section-header">
+  <div class="section-title">إدارة <span>التوزيعات النقدية</span></div>
+  <button class="btn btn-primary btn-sm" onclick="openUsDividendModal()">+ تسجيل توزيع</button>
+</div>
+<div class="table-wrap" id="us-div-table-wrap">
+  <div class="empty-state"><div class="icon">🏦</div><p>لا توجد توزيعات مسجلة</p><button class="btn btn-primary" onclick="openUsDividendModal()">+ سجّل أول توزيع</button></div>
+</div>
+</div><!-- end us-tab-dividends -->
+
+<!-- ══ US Settings ══ -->
+<div class="us-tab-content" id="us-tab-settings">
+<div class="section-title mb-3">⚙️ إعدادات السوق الأمريكي</div>
+
+<!-- S&P 500 Baseline -->
+<div class="card mb-3" style="border-color:rgba(78,157,240,0.2)">
+  <div class="section-title mb-3" style="color:var(--blue)">📈 مقارنة S&P 500 — قيمة التأسيس</div>
+  <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.75rem;line-height:1.7">
+    أدخل قيمة مؤشر S&P 500 في اليوم الذي بدأت فيه تتبع محفظتك، وستظهر لك مقارنة تلقائية بين أداء محفظتك وأداء المؤشر.
+  </div>
+  <div class="form-row">
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">قيمة S&P 500 عند بداية تتبع المحفظة</label>
+      <input type="number" class="form-control" id="sp-baseline-settings" placeholder="مثال: 5000" step="0.01" style="direction:ltr" oninput="saveSpBaselineSettings()">
+      <p class="form-hint mt-1">ابحث عن قيمة S&P 500 في أي تاريخ سابق عبر Google Finance أو Investing.com</p>
+    </div>
+    <div style="display:flex;align-items:flex-end">
+      <button class="btn btn-blue w-full" onclick="fetchAndRenderSP()">⟳ جلب S&P 500 الآن</button>
+    </div>
+  </div>
+  <div id="sp-settings-status" style="display:none;margin-top:0.6rem;padding:0.6rem 0.9rem;border-radius:8px;font-size:0.82rem"></div>
+</div>
+
+<!-- Cash Management -->
+<div class="card mb-3">
+  <div class="section-title mb-3">💵 إدارة الكاش (USD)</div>
+  <div class="form-row">
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">الرصيد الكاش الحالي (USD)</label>
+      <input type="number" class="form-control" id="us-cash-settings-input" placeholder="0.00" step="0.01">
+    </div>
+    <div style="display:flex;align-items:flex-end">
+      <button class="btn btn-primary w-full" onclick="saveUsCashFromSettings()">حفظ الرصيد</button>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div class="setting-item" style="margin-bottom:0">
+    <div class="setting-info">
+      <div class="label">تعديل الكاش تلقائياً عند الشراء/البيع</div>
+      <div class="desc">خصم/إضافة قيمة الصفقة من رصيد الكاش</div>
+    </div>
+    <label class="toggle"><input type="checkbox" id="us-auto-cash-toggle" onchange="saveUsSettings()"><span class="toggle-slider"></span></label>
+  </div>
+</div>
+
+<!-- Export / Import -->
+<div class="card mb-3">
+  <div class="section-title mb-3">📦 تصدير واستيراد بيانات السوق الأمريكي</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+    <div>
+      <button class="btn btn-ghost w-full" onclick="exportUsData()">⬇️ تصدير JSON</button>
+      <p class="form-hint mt-1">تنزيل نسخة احتياطية من بيانات السوق الأمريكي</p>
+    </div>
+    <div>
+      <button class="btn btn-ghost w-full" onclick="document.getElementById('us-import-file').click()">⬆️ استيراد JSON</button>
+      <input type="file" id="us-import-file" accept=".json" style="display:none" onchange="importUsData(this)">
+      <p class="form-hint mt-1">استعادة بيانات من نسخة احتياطية</p>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <div>
+    <button class="btn w-full" style="background:rgba(240,80,90,0.08);color:#f0505a;border:1px solid rgba(240,80,90,0.2)" onclick="resetUsData()">🗑 حذف جميع بيانات السوق الأمريكي</button>
+    <p class="form-hint mt-1" style="color:var(--red)">تحذير: هذا الإجراء لا يمكن التراجع عنه</p>
+  </div>
+</div>
+
+</div><!-- end us-tab-settings -->
+
 </main>
-
-
 </div><!-- end market-us-content -->
 
 <!-- ========== المحفظة الشاملة ========== -->
-<div id="market-combined-content" class="market-content">
+<div id="market-combined-content" class="market-content" style="display:none">
 <main>
 
 <!-- ══ Combined KPIs ══ -->
@@ -2876,6 +3048,48 @@ oninput="saveTasiBaselineSettings()">
   <div style="display:flex;gap:0.6rem">
     <button class="btn btn-primary w-full" onclick="saveUsCash()">حفظ</button>
     <button class="btn btn-ghost" onclick="closeModal('modal-us-cash')">إلغاء</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ Modal: US Dividend ══ -->
+<div class="modal-overlay" id="modal-us-dividend">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title">🏦 تسجيل توزيع نقدي (USD)</div>
+    <button class="modal-close" onclick="closeModal('modal-us-dividend')">✕</button>
+  </div>
+  <div class="form-group">
+    <label class="form-label">رمز السهم</label>
+    <input type="text" class="form-control" id="us-div-symbol" placeholder="مثال: AAPL" style="direction:ltr;text-align:left">
+  </div>
+  <div class="form-row">
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">الكمية (أسهم)</label>
+      <input type="number" class="form-control" id="us-div-shares" placeholder="100" min="0" step="1">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">التوزيع للسهم الواحد ($)</label>
+      <input type="number" class="form-control" id="us-div-per-share" placeholder="0.00" min="0" step="0.01" oninput="calcUsDivTotal()">
+    </div>
+  </div>
+  <div class="form-row mt-2">
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">التاريخ</label>
+      <input type="date" class="form-control" id="us-div-date">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">الإجمالي ($)</label>
+      <div class="form-control" id="us-div-total" style="background:var(--bg-elevated);color:var(--accent);font-weight:700">$0.00</div>
+    </div>
+  </div>
+  <div class="form-group mt-2">
+    <label class="form-label">ملاحظة (اختياري)</label>
+    <input type="text" class="form-control" id="us-div-note" placeholder="مثال: توزيع Q1 2024">
+  </div>
+  <div style="display:flex;gap:0.6rem;margin-top:0.5rem">
+    <button class="btn btn-primary w-full" onclick="confirmUsDividend()">✅ تسجيل التوزيع</button>
+    <button class="btn btn-ghost" onclick="closeModal('modal-us-dividend')">إلغاء</button>
   </div>
 </div>
 </div>
@@ -4525,7 +4739,7 @@ showToast(`تم حذف ${name} من المحفظة`, 'info');
 
 function switchTab(tab) {
 
-document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('#market-saudi-content .tab-content').forEach(t => t.classList.remove('active'));
 
 document.querySelectorAll('#nav-saudi .nav-btn').forEach(b => b.classList.remove('active'));
 
@@ -7491,7 +7705,6 @@ setTimeout(() => fetchTasiIndex().then(d => { if(d) renderTasiComparison(d); }),
 
 }
 
-initMarkets();
 })();
 
 
@@ -7503,19 +7716,37 @@ var currentMarket = localStorage.getItem('portfolio_market_mode') || 'saudi';
 function switchMarket(market) {
   currentMarket = market;
   localStorage.setItem('portfolio_market_mode', market);
-  // إخفاء كل المحتوى
-  document.querySelectorAll('.market-content').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.market-btn').forEach(b => b.classList.remove('active'));
-  // إظهار المحتوى المطلوب
-  document.getElementById('market-' + market + '-content').classList.add('active');
-  document.getElementById('mkt-btn-' + market).classList.add('active');
-  // تبديل شريط التنقل العلوي
+
+  // إخفاء جميع أقسام السوق بـ style.display مباشرة (أقوى من CSS class)
+  ['saudi', 'us', 'combined'].forEach(function(m) {
+    var el = document.getElementById('market-' + m + '-content');
+    if (el) { el.style.display = 'none'; el.classList.remove('active'); }
+  });
+
+  // إظهار القسم المطلوب فقط
+  var target = document.getElementById('market-' + market + '-content');
+  if (target) { target.style.display = 'block'; target.classList.add('active'); }
+
+  // تبديل أزرار اختيار السوق
+  document.querySelectorAll('.market-btn').forEach(function(b) { b.classList.remove('active'); });
+  var mktBtn = document.getElementById('mkt-btn-' + market);
+  if (mktBtn) mktBtn.classList.add('active');
+
+  // تبديل nav التنقل
   var navSaudi = document.getElementById('nav-saudi');
   var navUs = document.getElementById('nav-us');
   if (navSaudi) navSaudi.style.display = market === 'saudi' ? 'flex' : 'none';
   if (navUs) navUs.style.display = market === 'us' ? 'flex' : 'none';
+
+  // تبديل أزرار الهيدر
+  var hdrSaudi = document.getElementById('header-actions-saudi');
+  var hdrUs = document.getElementById('header-actions-us');
+  if (hdrSaudi) hdrSaudi.style.display = market === 'saudi' ? 'flex' : 'none';
+  if (hdrUs) hdrUs.style.display = market === 'us' ? 'flex' : 'none';
+
+  // تشغيل العرض المناسب
   if (market === 'saudi') renderAll();
-  if (market === 'us') switchUsTab('dashboard');
+  if (market === 'us') { switchUsTab('dashboard'); updateUsHeaderCash(); }
   if (market === 'combined') refreshCombinedView();
 }
 
@@ -7523,10 +7754,11 @@ function switchMarket(market) {
 // حالة السوق الأمريكي
 // ========================================================
 let usState = {
-  holdings: {},       // { AAPL: { shares, avgCost, firstBuyDate } }
-  transactions: [],   // [ { id, type, symbol, shares, price, commission, date, note, pnl } ]
+  holdings: {},
+  transactions: [],
+  dividends: [],
   cash: 0,
-  settings: {}
+  settings: { autoCash: false, spBaseline: 0 }
 };
 
 function saveUsState() {
@@ -7578,7 +7810,9 @@ async function _yahooFetch(symbol) {
 // تحديث جميع أسعار السوق الأمريكي
 async function refreshAllUsPrices() {
   const icon = document.getElementById('us-refresh-icon');
+  const iconHdr = document.getElementById('us-refresh-icon-hdr');
   if (icon) { icon.classList.add('spin'); icon.textContent = '⟳'; }
+  if (iconHdr) { iconHdr.classList.add('spin'); }
   const symbols = Object.keys(usState.holdings).filter(s => usState.holdings[s].shares > 0);
   if (!symbols.length) {
     if (icon) icon.classList.remove('spin');
@@ -7604,6 +7838,7 @@ async function refreshAllUsPrices() {
     if (i + BATCH < symbols.length) await new Promise(r => setTimeout(r, 300));
   }
   if (icon) { icon.classList.remove('spin'); icon.textContent = '⟳'; }
+  if (iconHdr) { iconHdr.classList.remove('spin'); }
   if (failed === 0) showToast(`✅ تم تحديث ${success} سهم أمريكي`, 'success');
   else if (success > 0) showToast(`⚠️ نجح ${success} — تعذّر ${failed}`, 'info');
   else showToast('❌ تعذّر جلب الأسعار — تحقق من اتصالك بالإنترنت', 'error');
@@ -7613,10 +7848,9 @@ async function refreshAllUsPrices() {
 // تبديل تبويبات السوق الأمريكي
 // ========================================================
 function switchUsTab(tab) {
-  ['dashboard','portfolio','transactions'].forEach(t => {
-    var el = document.getElementById('us-tab-' + t);
-    if (el) el.style.display = t === tab ? 'block' : 'none';
-  });
+  document.querySelectorAll('#market-us-content .us-tab-content').forEach(function(el){ el.classList.remove('active'); });
+  var target = document.getElementById('us-tab-' + tab);
+  if (target) target.classList.add('active');
   document.querySelectorAll('#nav-us .nav-btn').forEach(function(b){ b.classList.remove('active'); });
   var activeBtn = document.getElementById('us-nav-' + tab);
   if (activeBtn) activeBtn.classList.add('active');
@@ -7630,42 +7864,69 @@ function renderUsAll() {
   renderUsDashboardKpis();
   renderUsPortfolioTable();
   renderUsTransactions();
+  renderUsDividends();
   updateUsCashDisplay();
+  updateUsSettingsInputs();
 }
 
 function updateUsCashDisplay() {
   const el = document.getElementById('us-cash-display');
   if (el) el.textContent = '$' + fmt(usState.cash);
+  updateUsHeaderCash();
+}
+
+function updateUsHeaderCash() {
+  const el = document.getElementById('header-us-cash');
+  if (el) el.textContent = '$' + fmt(usState.cash);
 }
 
 function renderUsDashboardKpis() {
   const symbols = Object.keys(usState.holdings).filter(s => usState.holdings[s].shares > 0);
-  let totalValue = 0, totalCost = 0, hasPrice = false;
+  let totalValue = 0, totalCost = 0;
   symbols.forEach(sym => {
     const h = usState.holdings[sym];
     const p = usPriceCache[sym];
     totalCost += h.shares * h.avgCost;
-    if (p) { totalValue += h.shares * p.price; hasPrice = true; }
-    else totalValue += h.shares * h.avgCost;
+    totalValue += h.shares * (p ? p.price : h.avgCost);
   });
   const pnl = totalValue - totalCost;
   const pct = totalCost > 0 ? (pnl / totalCost) * 100 : 0;
+  const totalDiv = (usState.dividends || []).reduce((s, d) => s + (d.totalAmount || 0), 0);
+
   const tv = document.getElementById('us-total-value');
   const tp = document.getElementById('us-total-pnl');
   const tps = document.getElementById('us-pnl-pct-sub');
   const tc = document.getElementById('us-total-cost-sub');
-  const hc = document.getElementById('us-holdings-count');
+  const divEl = document.getElementById('us-total-dividends');
   if (tv) tv.textContent = '$' + fmt(totalValue);
   if (tc) tc.textContent = 'التكلفة: $' + fmt(totalCost);
   if (tp) { tp.textContent = (pnl >= 0 ? '+$' : '-$') + fmt(Math.abs(pnl)); tp.className = 'stat-value ' + (pnl >= 0 ? 'text-green' : 'text-red'); }
   if (tps) { tps.textContent = (pct >= 0 ? '+' : '') + fmt(pct, 2) + '%'; tps.className = 'stat-sub ' + (pct >= 0 ? 'text-green' : 'text-red'); }
-  if (hc) hc.textContent = symbols.length;
+  if (divEl) divEl.textContent = '$' + fmt(totalDiv);
+
   var tvSar = document.getElementById('us-total-value-sar');
   var tpSar = document.getElementById('us-pnl-sar');
   if (tvSar) tvSar.textContent = '≈ ' + fmt(totalValue * usdToSar) + ' ر.س';
   if (tpSar) { var pnlSar = pnl * usdToSar; tpSar.textContent = (pnlSar >= 0 ? '≈ +' : '≈ ') + fmt(pnlSar) + ' ر.س'; tpSar.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)'; }
-  // تحديث الجدول المختصر في لوحة التحكم أيضاً
+
+  // Asset split bar
+  const totalPortfolio = totalValue + usState.cash;
+  const stkPct = totalPortfolio > 0 ? (totalValue / totalPortfolio) * 100 : 0;
+  const cshPct = totalPortfolio > 0 ? (usState.cash / totalPortfolio) * 100 : 0;
+  const bar = document.getElementById('us-asset-split-bar');
+  if (bar) bar.innerHTML = `<div style="width:${stkPct}%;background:#4e9df0;transition:width 0.4s"></div><div style="width:${cshPct}%;background:#22c97a;transition:width 0.4s"></div>`;
+  const svm = document.getElementById('us-stocks-value-sm');
+  const spm = document.getElementById('us-stocks-pct');
+  const cvm = document.getElementById('us-cash-value-sm');
+  const cpm = document.getElementById('us-cash-pct');
+  if (svm) svm.textContent = '$' + fmt(totalValue);
+  if (spm) spm.textContent = fmt(stkPct, 0) + '%';
+  if (cvm) cvm.textContent = '$' + fmt(usState.cash);
+  if (cpm) cpm.textContent = fmt(cshPct, 0) + '%';
+
   renderUsTopTable();
+  renderUsPieChart(symbols, totalValue);
+  renderSpComparison(null, pct, totalCost);
 }
 
 function renderUsTopTable() {
@@ -7727,6 +7988,24 @@ function renderUsTableInto(wrap, symbols, compact) {
 }
 
 function renderUsTransactions() {
+  // Stats
+  const sells = usState.transactions.filter(t => t.type === 'sell' && t.pnl != null);
+  let totalWin = 0, totalLoss = 0, winCount = 0, lossCount = 0;
+  sells.forEach(t => { if (t.pnl >= 0) { totalWin += t.pnl; winCount++; } else { totalLoss += t.pnl; lossCount++; } });
+  const netPnl = totalWin + totalLoss;
+  const totalTrades = sells.length;
+  const winRate = totalTrades > 0 ? (winCount / totalTrades) * 100 : null;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  const setClass = (id, cls) => { const el = document.getElementById(id); if (el) el.className = 'rs-value ' + cls; };
+  set('us-rs-total-win', '$' + fmt(totalWin));
+  set('us-rs-win-count', winCount + ' صفقة');
+  set('us-rs-total-loss', '-$' + fmt(Math.abs(totalLoss)));
+  set('us-rs-loss-count', lossCount + ' صفقة');
+  set('us-rs-net-pnl', (netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(netPnl)));
+  setClass('us-rs-net-pnl', netPnl >= 0 ? 'text-green' : 'text-red');
+  set('us-rs-win-rate', winRate != null ? fmt(winRate, 1) + '%' : '—');
+  set('us-rs-trades-total', totalTrades + ' صفقة مغلقة');
+
   const wrap = document.getElementById('us-tx-table-wrap');
   if (!wrap) return;
   const txs = [...usState.transactions].reverse();
@@ -8101,14 +8380,308 @@ function renderCombinedTable(saSymbols, usSymbols) {
 // ========================================================
 // تهيئة عند بدء التشغيل — Market Initialization
 // ========================================================
+// ========================================================
+// S&P 500 — مقارنة المؤشر الأمريكي
+// ========================================================
+let spCache = null;
+
+async function fetchSPIndex() {
+  try {
+    const proxy = 'https://corsproxy.io/?';
+    const url = encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?interval=1d&range=1d');
+    const r = await fetch(proxy + url, { headers:{'Accept':'application/json'}, signal: AbortSignal.timeout(12000) });
+    if (!r.ok) return null;
+    const d = await r.json();
+    const meta = d?.chart?.result?.[0]?.meta;
+    if (!meta) return null;
+    const price = meta.regularMarketPrice || meta.previousClose;
+    const prev = meta.previousClose || meta.chartPreviousClose || price;
+    if (!price || price <= 0) return null;
+    return { price, change: price - prev, pct: prev ? (price-prev)/prev*100 : 0 };
+  } catch(e) { return null; }
+}
+
+async function fetchAndRenderSP() {
+  const st = document.getElementById('sp-settings-status');
+  if (st) { st.style.cssText = 'display:block;padding:.5rem .75rem;border-radius:8px;font-size:.82rem;background:var(--bg-elevated);color:var(--text-2);border:1px solid var(--border)'; st.textContent = '⏳ جارٍ جلب S&P 500...'; }
+  const data = await fetchSPIndex();
+  if (data) {
+    spCache = data;
+    if (st) { st.style.cssText = 'display:block;padding:.5rem .75rem;border-radius:8px;font-size:.82rem;background:rgba(34,201,122,.12);color:#22c97a;border:1px solid rgba(34,201,122,.3)'; st.textContent = '✅ S&P 500: ' + fmt(data.price, 2) + ' نقطة'; }
+    renderSpComparison(data, null, null);
+  } else {
+    if (st) { st.style.cssText = 'display:block;padding:.5rem .75rem;border-radius:8px;font-size:.82rem;background:var(--red-dim);color:#f0505a;border:1px solid rgba(240,80,90,.3)'; st.textContent = '❌ تعذّر جلب S&P 500 — تحقق من اتصالك'; }
+  }
+}
+
+function saveSpBaseline() {
+  const val = parseFloat(document.getElementById('sp-baseline-input')?.value) || 0;
+  if (!usState.settings) usState.settings = {};
+  usState.settings.spBaseline = val;
+  saveUsState();
+  renderSpComparison(spCache, null, null);
+}
+
+function saveSpBaselineSettings() {
+  const val = parseFloat(document.getElementById('sp-baseline-settings')?.value) || 0;
+  if (!usState.settings) usState.settings = {};
+  usState.settings.spBaseline = val;
+  saveUsState();
+  // sync widget input
+  const wi = document.getElementById('sp-baseline-input');
+  if (wi && val > 0) wi.value = val;
+  renderSpComparison(spCache, null, null);
+}
+
+function renderSpComparison(spData, portReturnPctOverride, totalCostOverride) {
+  const data = spData || spCache;
+  const baseline = usState.settings?.spBaseline || 0;
+
+  // sync baseline inputs
+  const bi = document.getElementById('sp-baseline-input');
+  const bs = document.getElementById('sp-baseline-settings');
+  if (bi && baseline > 0 && !bi.value) bi.value = baseline;
+  if (bs && baseline > 0 && !bs.value) bs.value = baseline;
+
+  // Portfolio return %
+  let portReturnPct = portReturnPctOverride;
+  let totalCost = totalCostOverride;
+  if (portReturnPct == null) {
+    const syms = Object.keys(usState.holdings).filter(s => usState.holdings[s].shares > 0);
+    let tv = 0, tc = 0;
+    syms.forEach(s => { const h = usState.holdings[s]; const p = usPriceCache[s]; tc += h.shares * h.avgCost; tv += h.shares * (p ? p.price : h.avgCost); });
+    totalCost = tc;
+    portReturnPct = tc > 0 ? ((tv - tc) / tc) * 100 : null;
+  }
+
+  const spSincePct = (baseline > 0 && data?.price) ? ((data.price - baseline) / baseline) * 100 : null;
+  const alpha = (portReturnPct != null && spSincePct != null) ? portReturnPct - spSincePct : null;
+
+  const badge = document.getElementById('sp-live-badge');
+  if (badge) badge.style.display = data ? 'inline' : 'none';
+
+  const curEl = document.getElementById('sp-current');
+  if (curEl) { curEl.textContent = data ? fmt(data.price, 2) : '—'; curEl.style.color = data ? '#4e9df0' : 'var(--text-3)'; }
+
+  const chEl = document.getElementById('sp-change-today');
+  if (chEl) {
+    if (data) { const sign = data.pct >= 0 ? '+' : ''; chEl.textContent = `${data.pct>=0?'▲':'▼'} ${sign}${fmt(data.pct,2)}%`; chEl.style.color = data.pct >= 0 ? '#22c97a' : '#f0505a'; }
+    else { chEl.textContent = '—'; chEl.style.color = 'var(--text-3)'; }
+  }
+
+  const sinceEl = document.getElementById('sp-since-val');
+  const sinceDsp = document.getElementById('sp-baseline-disp');
+  if (sinceEl) {
+    if (spSincePct != null) { const sign = spSincePct>=0?'+':''; sinceEl.textContent = sign+fmt(spSincePct,2)+'%'; sinceEl.style.color = spSincePct>=0?'#22c97a':'#f0505a'; if(sinceDsp) sinceDsp.textContent = 'من '+fmt(baseline,2)+' نقطة'; }
+    else { sinceEl.textContent = '—'; sinceEl.style.color = 'var(--text-3)'; if(sinceDsp) sinceDsp.textContent = baseline>0?'في انتظار سعر S&P':'أدخل قيمة البداية ↓'; }
+  }
+
+  const portEl = document.getElementById('us-portfolio-return');
+  const portSub = document.getElementById('us-portfolio-return-sub');
+  if (portEl) {
+    if (portReturnPct != null) { const sign = portReturnPct>=0?'+':''; portEl.textContent = sign+fmt(portReturnPct,2)+'%'; portEl.style.color = portReturnPct>=0?'#22c97a':'#f0505a'; }
+    else { portEl.textContent = '—'; portEl.style.color = 'var(--text-3)'; }
+    if (portSub) portSub.textContent = totalCost > 0 ? 'على $'+fmt(totalCost) : 'لا توجد أسهم';
+  }
+
+  const alphaEl = document.getElementById('us-alpha-val');
+  const alphaSub = document.getElementById('us-alpha-sub');
+  if (alphaEl) {
+    if (alpha != null) {
+      const sign = alpha>=0?'+':'';
+      alphaEl.textContent = sign+fmt(alpha,2)+'%';
+      alphaEl.style.color = alpha>=0?'#22c97a':'#f0505a';
+      alphaEl.parentElement.style.borderColor = alpha>=0?'rgba(34,201,122,0.25)':'rgba(240,80,90,0.25)';
+      if (alphaSub) { alphaSub.textContent = alpha>=0?'✅ تتفوق على S&P 500':'⚠️ أقل من S&P 500'; alphaSub.style.color = alpha>=0?'#22c97a':'#f0505a'; }
+    } else {
+      alphaEl.textContent = '—'; alphaEl.style.color = 'var(--text-3)';
+      if (alphaSub) { alphaSub.textContent = 'أدخل بيانات المقارنة'; alphaSub.style.color = 'var(--text-3)'; }
+    }
+  }
+}
+
+// ========================================================
+// مخطط التوزيع — Pie Chart للسوق الأمريكي
+// ========================================================
+function renderUsPieChart(symbols, totalValue) {
+  const canvas = document.getElementById('us-pie-chart');
+  const legend = document.getElementById('us-pie-legend');
+  if (!canvas || !legend) return;
+  const ctx = canvas.getContext('2d');
+  const W = 160, H = 160, cx = W/2, cy = H/2, r = 65;
+  ctx.clearRect(0,0,W,H);
+  if (!symbols.length || totalValue <= 0) {
+    ctx.fillStyle = 'rgba(255,255,255,0.05)';
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill();
+    legend.innerHTML = '<div style="color:var(--text-3);font-size:0.75rem">لا توجد أسهم</div>';
+    return;
+  }
+  const colors = ['#e8a020','#4e9df0','#22c97a','#f0505a','#a78bfa','#fb923c','#34d399','#60a5fa','#f472b6','#facc15'];
+  const data = symbols.map((sym, i) => {
+    const h = usState.holdings[sym];
+    const p = usPriceCache[sym];
+    const val = h.shares * (p ? p.price : h.avgCost);
+    return { sym, val, color: colors[i % colors.length] };
+  }).filter(d => d.val > 0).sort((a,b) => b.val - a.val);
+  const total = data.reduce((s,d) => s+d.val, 0);
+  let angle = -Math.PI/2;
+  data.forEach(d => {
+    const sweep = (d.val/total)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+sweep); ctx.closePath();
+    ctx.fillStyle = d.color; ctx.fill();
+    ctx.strokeStyle = '#1f2840'; ctx.lineWidth = 2; ctx.stroke();
+    angle += sweep;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,r*0.55,0,Math.PI*2);
+  ctx.fillStyle = '#192030'; ctx.fill();
+  legend.innerHTML = data.slice(0,6).map(d =>
+    `<div class="pie-leg-item"><span style="background:${d.color}"></span><span>${d.sym}</span><span style="margin-right:auto;color:var(--text-2)">${fmt((d.val/total)*100,1)}%</span></div>`
+  ).join('');
+}
+
+// ========================================================
+// التوزيعات الأمريكية
+// ========================================================
+function openUsDividendModal() {
+  document.getElementById('us-div-symbol').value = '';
+  document.getElementById('us-div-shares').value = '';
+  document.getElementById('us-div-per-share').value = '';
+  document.getElementById('us-div-note').value = '';
+  document.getElementById('us-div-date').value = today();
+  document.getElementById('us-div-total').textContent = '$0.00';
+  openModal('modal-us-dividend');
+}
+
+function calcUsDivTotal() {
+  const shares = parseFloat(document.getElementById('us-div-shares')?.value) || 0;
+  const perShare = parseFloat(document.getElementById('us-div-per-share')?.value) || 0;
+  const total = shares * perShare;
+  const el = document.getElementById('us-div-total');
+  if (el) el.textContent = '$' + fmt(total);
+}
+
+function confirmUsDividend() {
+  const sym = (document.getElementById('us-div-symbol')?.value || '').trim().toUpperCase();
+  const shares = parseFloat(document.getElementById('us-div-shares')?.value) || 0;
+  const perShare = parseFloat(document.getElementById('us-div-per-share')?.value) || 0;
+  const date = document.getElementById('us-div-date')?.value || today();
+  const note = document.getElementById('us-div-note')?.value || '';
+  if (!sym) { showToast('أدخل رمز السهم', 'error'); return; }
+  if (perShare <= 0) { showToast('أدخل قيمة التوزيع للسهم الواحد', 'error'); return; }
+  const totalAmount = shares * perShare;
+  if (!usState.dividends) usState.dividends = [];
+  usState.dividends.push({ id: uid(), symbol: sym, shares, perShare, totalAmount, date, note });
+  usState.cash += totalAmount;
+  saveUsState();
+  closeModal('modal-us-dividend');
+  renderUsAll();
+  showToast(`✅ تم تسجيل توزيع ${sym} — $${fmt(totalAmount)}`, 'success');
+}
+
+function renderUsDividends() {
+  const wrap = document.getElementById('us-div-table-wrap');
+  if (!wrap) return;
+  const divs = [...(usState.dividends || [])].reverse();
+  if (!divs.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">🏦</div><p>لا توجد توزيعات مسجلة</p><button class="btn btn-primary" onclick="openUsDividendModal()">+ سجّل أول توزيع</button></div>`;
+    return;
+  }
+  const rows = divs.map(d => `<tr>
+    <td>${d.date || '—'}</td>
+    <td><span class="symbol-badge" style="direction:ltr">${d.symbol}</span></td>
+    <td style="direction:ltr;text-align:right">${fmtN(d.shares)}</td>
+    <td style="direction:ltr;text-align:right">$${fmt(d.perShare)}</td>
+    <td style="direction:ltr;text-align:right;color:var(--green);font-weight:700">$${fmt(d.totalAmount)}</td>
+    <td style="color:var(--text-3);font-size:0.8rem">${d.note || '—'}</td>
+    <td><button class="btn btn-sm" style="background:rgba(240,80,90,0.08);color:#f0505a;border:1px solid rgba(240,80,90,0.2)" onclick="deleteUsDividend('${d.id}')">🗑</button></td>
+  </tr>`).join('');
+  wrap.innerHTML = `<table>
+    <thead><tr><th>التاريخ</th><th>الرمز</th><th>الكمية</th><th>للسهم ($)</th><th>الإجمالي ($)</th><th>ملاحظة</th><th>حذف</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function deleteUsDividend(id) {
+  if (!confirm('هل تريد حذف هذا التوزيع؟')) return;
+  usState.dividends = (usState.dividends || []).filter(d => d.id !== id);
+  saveUsState();
+  renderUsAll();
+  showToast('تم حذف التوزيع', 'info');
+}
+
+// ========================================================
+// إعدادات السوق الأمريكي
+// ========================================================
+function updateUsSettingsInputs() {
+  const ci = document.getElementById('us-cash-settings-input');
+  if (ci) ci.value = usState.cash || '';
+  const at = document.getElementById('us-auto-cash-toggle');
+  if (at) at.checked = usState.settings?.autoCash || false;
+  const bs = document.getElementById('sp-baseline-settings');
+  if (bs && usState.settings?.spBaseline > 0) bs.value = usState.settings.spBaseline;
+  const bi = document.getElementById('sp-baseline-input');
+  if (bi && usState.settings?.spBaseline > 0 && !bi.value) bi.value = usState.settings.spBaseline;
+}
+
+function saveUsCashFromSettings() {
+  const val = parseFloat(document.getElementById('us-cash-settings-input')?.value) || 0;
+  usState.cash = val;
+  saveUsState();
+  renderUsAll();
+  showToast('✅ تم تحديث الكاش', 'success');
+}
+
+function saveUsSettings() {
+  if (!usState.settings) usState.settings = {};
+  usState.settings.autoCash = document.getElementById('us-auto-cash-toggle')?.checked || false;
+  saveUsState();
+}
+
+function exportUsData() {
+  const blob = new Blob([JSON.stringify(usState, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `us-portfolio-${today()}.json`;
+  a.click();
+}
+
+function importUsData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.holdings) { showToast('❌ ملف غير صالح', 'error'); return; }
+      usState = { ...usState, ...data };
+      saveUsState();
+      renderUsAll();
+      showToast('✅ تم استيراد البيانات', 'success');
+    } catch(err) { showToast('❌ خطأ في قراءة الملف', 'error'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function resetUsData() {
+  if (!confirm('هل أنت متأكد من حذف جميع بيانات السوق الأمريكي؟ هذا الإجراء لا يمكن التراجع عنه.')) return;
+  usState = { holdings: {}, transactions: [], dividends: [], cash: 0, settings: { autoCash: false, spBaseline: 0 } };
+  saveUsState();
+  renderUsAll();
+  showToast('تم حذف جميع بيانات السوق الأمريكي', 'info');
+}
+
+// ========================================================
+// تهيئة عند بدء التشغيل — Market Initialization
+// ========================================================
 function initMarkets() {
   loadUsState();
-  // تطبيق الوضع المحفوظ
   const savedMode = localStorage.getItem('portfolio_market_mode') || 'saudi';
   if (savedMode !== 'saudi') switchMarket(savedMode);
-  // جلب سعر الصرف في الخلفية
   fetchExchangeRate();
 }
+
+initMarkets();
 
 </script>
 
