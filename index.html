@@ -2074,13 +2074,18 @@ oninput="saveTasiBaselineSettings()">
 
 <div class="section-title mb-3">📦 تصدير واستيراد البيانات</div>
 
+<div style="margin-bottom:0.75rem">
+  <button class="btn btn-primary w-full" onclick="exportAllData()">💾 نسخة احتياطية شاملة (السعودي + الأمريكي)</button>
+  <p class="form-hint mt-1">يشمل كل البيانات: المحفظتين + الإعدادات + مفتاح API</p>
+</div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
 
 <div>
 
-<button class="btn btn-ghost w-full" onclick="exportData()">⬇️ تصدير JSON</button>
+<button class="btn btn-ghost w-full" onclick="exportData()">⬇️ تصدير JSON (سعودي)</button>
 
-<p class="form-hint mt-1">تصدير كافة بياناتك ومحفظتك كملف JSON</p>
+<p class="form-hint mt-1">تصدير بيانات السوق السعودي فقط</p>
 
 </div>
 
@@ -2090,11 +2095,11 @@ oninput="saveTasiBaselineSettings()">
 
 ⬆️ استيراد JSON
 
-<input type="file" accept=".json" onchange="importData(event)" style="display:none">
+<input type="file" accept=".json" onchange="importAllData(event)" style="display:none">
 
 </label>
 
-<p class="form-hint mt-1">استيراد بيانات محفوظة مسبقاً</p>
+<p class="form-hint mt-1">استيراد نسخة احتياطية (شاملة أو سعودي فقط)</p>
 
 </div>
 
@@ -6738,6 +6743,83 @@ e.target.value = '';
 }
 
 
+
+// ========================================================
+// FULL BACKUP — يشمل السوق السعودي والأمريكي ومفتاح API
+// ========================================================
+
+function exportAllData() {
+  const allData = {
+    version: '3.0',
+    exportedAt: new Date().toISOString(),
+    saudi: { ...state },
+    us: { ...usState },
+    meta: {
+      sahmkKey: localStorage.getItem('tasi_sahmk_key') || '',
+      marketMode: localStorage.getItem('portfolio_market_mode') || 'saudi'
+    }
+  };
+  const json = JSON.stringify(allData, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `portfolio-full-backup-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ تم تصدير النسخة الاحتياطية الشاملة', 'success');
+}
+
+function importAllData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+
+      // نسخة شاملة (v3)
+      if (data.version === '3.0' && data.saudi && data.us) {
+        if (!confirm('هل تريد استعادة النسخة الاحتياطية الشاملة؟ سيتم استبدال البيانات الحالية.')) return;
+        if (data.saudi.holdings) Object.assign(state.holdings, data.saudi.holdings);
+        if (data.saudi.transactions) state.transactions = [...state.transactions, ...data.saudi.transactions.filter(t => !state.transactions.find(ex => ex.id === t.id))];
+        if (data.saudi.dividends) state.dividends = [...state.dividends, ...data.saudi.dividends.filter(d => !state.dividends.find(ex => ex.id === d.id))];
+        if (data.saudi.cash != null) state.cash = data.saudi.cash;
+        if (data.saudi.settings) Object.assign(state.settings, data.saudi.settings);
+        saveState();
+        renderAll();
+        usState = { ...usState, ...data.us };
+        saveUsState();
+        renderUsAll();
+        if (data.meta?.sahmkKey) {
+          localStorage.setItem('tasi_sahmk_key', data.meta.sahmkKey);
+          sahmkApiKey = data.meta.sahmkKey;
+        }
+        if (data.meta?.marketMode) localStorage.setItem('portfolio_market_mode', data.meta.marketMode);
+        showToast('✅ تم استعادة النسخة الاحتياطية الشاملة بنجاح', 'success');
+
+      // نسخة قديمة — سعودي فقط (v2)
+      } else if (data.holdings || data.transactions) {
+        if (!confirm('هل تريد استيراد البيانات؟ سيتم الدمج مع البيانات الحالية')) return;
+        if (data.holdings) Object.assign(state.holdings, data.holdings);
+        if (data.transactions) state.transactions = [...state.transactions, ...data.transactions.filter(t => !state.transactions.find(ex => ex.id === t.id))];
+        if (data.dividends) state.dividends = [...state.dividends, ...data.dividends.filter(d => !state.dividends.find(ex => ex.id === d.id))];
+        if (data.cash != null) state.cash = data.cash;
+        if (data.settings) Object.assign(state.settings, data.settings);
+        saveState();
+        renderAll();
+        showToast('✅ تم استيراد البيانات بنجاح', 'success');
+      } else {
+        throw new Error('صيغة الملف غير معروفة');
+      }
+
+    } catch(err) {
+      showToast('❌ خطأ في قراءة الملف: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
 
 function clearAllData() {
 
