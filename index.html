@@ -7702,7 +7702,9 @@ if (symbols.length > 0) {
 setTimeout(() => refreshAllPrices(), 800);
 
 setTimeout(() => fetchTasiIndex().then(d => { if(d) renderTasiComparison(d); }), 2500);
-
+// تحديث الأسهم الأمريكية و S&P 500 تلقائياً عند الدخول
+setTimeout(() => refreshAllUsPrices(), 1200);
+setTimeout(() => fetchAndRenderSP(), 1500);
 } else if (sahmkApiKey) {
 
 setTimeout(() => fetchTasiIndex().then(d => { if(d) renderTasiComparison(d); }), 1000);
