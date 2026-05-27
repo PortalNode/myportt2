@@ -2273,13 +2273,53 @@ oninput="saveTasiBaselineSettings()">
 <div class="us-tab-content" id="us-tab-transactions">
 <div class="section-header">
   <div class="section-title">سجل <span>العمليات الأمريكية</span></div>
+  <div style="display:flex;gap:0.5rem;align-items:center">
+    <select class="form-control" id="us-tx-filter-type" style="width:auto;padding:0.4rem 0.7rem;font-size:0.82rem" onchange="renderUsTransactions()">
+      <option value="">كل العمليات</option>
+      <option value="buy">شراء</option>
+      <option value="sell">بيع</option>
+      <option value="dividend">توزيع</option>
+    </select>
+    <select class="form-control" id="us-tx-filter-sym" style="width:auto;padding:0.4rem 0.7rem;font-size:0.82rem" onchange="renderUsTransactions()">
+      <option value="">كل الأسهم</option>
+    </select>
+  </div>
 </div>
 <!-- Stats Row -->
-<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.75rem;margin-bottom:1rem">
-  <div class="rs-card"><div class="rs-label">💰 إجمالي الأرباح المحققة</div><div class="rs-value text-green" id="us-rs-total-win">$0.00</div><div class="rs-sub" id="us-rs-win-count">0 صفقة</div></div>
-  <div class="rs-card"><div class="rs-label">📉 إجمالي الخسائر المحققة</div><div class="rs-value text-red" id="us-rs-total-loss">$0.00</div><div class="rs-sub" id="us-rs-loss-count">0 صفقة</div></div>
-  <div class="rs-card"><div class="rs-label">📊 صافي الربح المحقق</div><div class="rs-value" id="us-rs-net-pnl">$0.00</div><div class="rs-sub" id="us-rs-net-pct">—</div></div>
-  <div class="rs-card"><div class="rs-label">🎯 نسبة نجاح الصفقات</div><div class="rs-value text-accent" id="us-rs-win-rate">—</div><div class="rs-sub" id="us-rs-trades-total">0 صفقة مغلقة</div></div>
+<div class="realized-summary-grid" id="us-realized-summary-grid">
+  <div class="rs-card" style="border-color:rgba(34,201,122,0.25)">
+    <div class="rs-label">💰 إجمالي الأرباح المحققة</div>
+    <div class="rs-value text-green" id="us-rs-total-win">$0.00</div>
+    <div class="rs-sub" id="us-rs-win-count">0 صفقة</div>
+  </div>
+  <div class="rs-card" style="border-color:rgba(240,80,90,0.25)">
+    <div class="rs-label">📉 إجمالي الخسائر المحققة</div>
+    <div class="rs-value text-red" id="us-rs-total-loss">$0.00</div>
+    <div class="rs-sub" id="us-rs-loss-count">0 صفقة</div>
+  </div>
+  <div class="rs-card" style="border-color:rgba(232,160,32,0.2)">
+    <div class="rs-label">📊 صافي الربح المحقق</div>
+    <div class="rs-value" id="us-rs-net-pnl">$0.00</div>
+    <div class="rs-sub" id="us-rs-net-pct">—</div>
+  </div>
+  <div class="rs-card">
+    <div class="rs-label">🎯 نسبة نجاح الصفقات</div>
+    <div class="rs-value text-accent" id="us-rs-win-rate">—</div>
+    <div class="rs-sub" id="us-rs-trades-total">0 صفقة مغلقة</div>
+  </div>
+  <div class="rs-card" style="border-color:rgba(78,157,240,0.2)">
+    <div class="rs-label">⚖️ متوسط الربح / الخسارة</div>
+    <div class="rs-value text-blue" id="us-rs-avg-pnl">—</div>
+    <div class="rs-sub">لكل صفقة مغلقة</div>
+  </div>
+</div>
+<!-- Trade Filter Tabs -->
+<div class="trade-filter-tabs">
+  <button id="us-ttab-all" class="trade-tab active-all" onclick="setUsTradeTab('all')">📋 كل العمليات</button>
+  <button id="us-ttab-win" class="trade-tab" onclick="setUsTradeTab('win')">🟢 الصفقات الرابحة</button>
+  <button id="us-ttab-loss" class="trade-tab" onclick="setUsTradeTab('loss')">🔴 الصفقات الخاسرة</button>
+  <button id="us-ttab-buy" class="trade-tab" onclick="setUsTradeTab('buy')">🛒 الشراء</button>
+  <button id="us-ttab-div" class="trade-tab" onclick="setUsTradeTab('div')">💰 التوزيعات</button>
 </div>
 <div class="table-wrap" id="us-tx-table-wrap">
   <div class="empty-state"><div class="icon">📋</div><p>لا توجد عمليات بعد</p></div>
@@ -6578,6 +6618,14 @@ showToast('تم حذف العملية', 'info');
 
 }
 
+function deleteUsTransaction(id) {
+  if (!confirm('هل تريد حذف هذه العملية؟ لن يتم التراجع عن الحذف')) return;
+  usState.transactions = usState.transactions.filter(t => t.id !== id);
+  saveUsState();
+  renderUsAll();
+  showToast('تم حذف العملية', 'info');
+}
+
 
 
 function deleteDividend(id) {
@@ -7990,50 +8038,122 @@ function renderUsTableInto(wrap, symbols, compact) {
   </table>`;
 }
 
+let _usTradeTab = 'all';
+
+function setUsTradeTab(tab) {
+  _usTradeTab = tab;
+  ['all','win','loss','buy','div'].forEach(t => {
+    const el = document.getElementById('us-ttab-' + t);
+    if (!el) return;
+    el.className = 'trade-tab';
+    if (t === tab) el.classList.add('active-' + (t === 'win' ? 'win' : t === 'loss' ? 'loss' : t === 'div' ? 'div' : 'all'));
+  });
+  renderUsTransactions();
+}
+
 function renderUsTransactions() {
   // Stats
-  const sells = usState.transactions.filter(t => t.type === 'sell' && t.pnl != null);
-  let totalWin = 0, totalLoss = 0, winCount = 0, lossCount = 0;
-  sells.forEach(t => { if (t.pnl >= 0) { totalWin += t.pnl; winCount++; } else { totalLoss += t.pnl; lossCount++; } });
+  const allSells = usState.transactions.filter(t => t.type === 'sell' && t.pnl != null);
+  const wins = allSells.filter(t => t.pnl > 0);
+  const losses = allSells.filter(t => t.pnl < 0);
+  const totalWin = wins.reduce((s, t) => s + t.pnl, 0);
+  const totalLoss = losses.reduce((s, t) => s + t.pnl, 0);
   const netPnl = totalWin + totalLoss;
-  const totalTrades = sells.length;
-  const winRate = totalTrades > 0 ? (winCount / totalTrades) * 100 : null;
+  const winRate = allSells.length > 0 ? (wins.length / allSells.length * 100) : null;
+  const avgPnl = allSells.length > 0 ? (netPnl / allSells.length) : null;
+  const totalCapital = allSells.reduce((s, t) => s + (t.shares * (t.price || 0)), 0);
+  const netPct = totalCapital > 0 ? (netPnl / totalCapital * 100) : null;
+
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-  const setClass = (id, cls) => { const el = document.getElementById(id); if (el) el.className = 'rs-value ' + cls; };
   set('us-rs-total-win', '$' + fmt(totalWin));
-  set('us-rs-win-count', winCount + ' صفقة');
-  set('us-rs-total-loss', '-$' + fmt(Math.abs(totalLoss)));
-  set('us-rs-loss-count', lossCount + ' صفقة');
-  set('us-rs-net-pnl', (netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(netPnl)));
-  setClass('us-rs-net-pnl', netPnl >= 0 ? 'text-green' : 'text-red');
+  set('us-rs-win-count', wins.length + ' صفقة');
+  set('us-rs-total-loss', fmt(totalLoss) + ' $');
+  set('us-rs-loss-count', losses.length + ' صفقة');
   set('us-rs-win-rate', winRate != null ? fmt(winRate, 1) + '%' : '—');
-  set('us-rs-trades-total', totalTrades + ' صفقة مغلقة');
+  set('us-rs-trades-total', allSells.length + ' صفقة مغلقة');
+
+  const netEl = document.getElementById('us-rs-net-pnl');
+  if (netEl) {
+    netEl.textContent = (netPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(netPnl));
+    netEl.style.color = netPnl > 0 ? '#22c97a' : netPnl < 0 ? '#f0505a' : 'var(--text-2)';
+  }
+  set('us-rs-net-pct', netPct != null ? `${netPct >= 0 ? '+' : ''}${fmt(netPct, 2)}% من رأس المال` : '—');
+
+  const avgEl = document.getElementById('us-rs-avg-pnl');
+  if (avgEl) {
+    avgEl.textContent = avgPnl != null ? (avgPnl >= 0 ? '+$' : '-$') + fmt(Math.abs(avgPnl)) : '—';
+    avgEl.style.color = avgPnl != null ? (avgPnl >= 0 ? '#4e9df0' : '#f0505a') : 'var(--text-2)';
+  }
+
+  // Update symbol filter dropdown
+  const symSelect = document.getElementById('us-tx-filter-sym');
+  if (symSelect) {
+    const current = symSelect.value;
+    const syms = [...new Set(usState.transactions.map(t => t.symbol))].sort();
+    symSelect.innerHTML = '<option value="">كل الأسهم</option>' + syms.map(s => `<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('');
+  }
 
   const wrap = document.getElementById('us-tx-table-wrap');
   if (!wrap) return;
-  const txs = [...usState.transactions].reverse();
+
+  let txs = [...usState.transactions];
+
+  // Apply trade tab filter
+  if (_usTradeTab === 'win') txs = txs.filter(t => t.type === 'sell' && t.pnl > 0);
+  else if (_usTradeTab === 'loss') txs = txs.filter(t => t.type === 'sell' && t.pnl <= 0);
+  else if (_usTradeTab === 'buy') txs = txs.filter(t => t.type === 'buy');
+  else if (_usTradeTab === 'div') txs = txs.filter(t => t.type === 'dividend');
+
+  // Apply dropdown filters
+  const filterType = document.getElementById('us-tx-filter-type')?.value || '';
+  const filterSym = document.getElementById('us-tx-filter-sym')?.value || '';
+  if (filterType) txs = txs.filter(t => t.type === filterType);
+  if (filterSym) txs = txs.filter(t => t.symbol === filterSym);
+
+  txs.sort((a, b) => new Date(b.date) - new Date(a.date));
+
   if (!txs.length) {
-    wrap.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>لا توجد عمليات بعد</p></div>`;
+    let emptyMsg = 'لا توجد عمليات بعد';
+    if (_usTradeTab === 'win') emptyMsg = '🟢 لا توجد صفقات رابحة بعد';
+    if (_usTradeTab === 'loss') emptyMsg = '🔴 لا توجد صفقات خاسرة — عمل ممتاز!';
+    wrap.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>${emptyMsg}</p></div>`;
     return;
   }
+
+  const typeLabel = {
+    buy: '<span class="tx-chip tx-buy">🟢 شراء</span>',
+    sell: '<span class="tx-chip tx-sell">🔴 بيع</span>',
+    dividend: '<span class="tx-chip tx-dividend">💰 توزيع</span>'
+  };
+
   const rows = txs.map(tx => {
-    const typeLabel = tx.type === 'buy' ? `<span class="tx-chip tx-buy">شراء</span>` : `<span class="tx-chip tx-sell">بيع</span>`;
-    const pnlCell = tx.pnl != null ? `<span style="color:${tx.pnl>=0?'#22c97a':'#f0505a'};font-weight:700">${tx.pnl>=0?'+$':'-$'}${fmt(Math.abs(tx.pnl))}</span>` : '—';
-    return `<tr>
-      <td>${tx.date || '—'}</td>
-      <td>${typeLabel}</td>
+    const rowClass = tx.type === 'sell' && tx.pnl != null ? (tx.pnl > 0 ? 'row-win' : 'row-loss') : '';
+    let pnlBadge = '—';
+    let pnlPctBadge = '—';
+    if (tx.type === 'sell' && tx.pnl != null) {
+      const cost = tx.shares * tx.price - tx.pnl;
+      const pct = cost > 0 ? (tx.pnl / cost) * 100 : 0;
+      pnlBadge = `<span style="display:inline-flex;align-items:center;padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:700;background:${tx.pnl>=0?'rgba(34,201,122,0.12)':'rgba(240,80,90,0.12)'};color:${tx.pnl>=0?'#22c97a':'#f0505a'}">${tx.pnl>=0?'▲ +$':'▼ -$'}${fmt(Math.abs(tx.pnl))}</span>`;
+      pnlPctBadge = `<span style="display:inline-flex;align-items:center;font-weight:700;color:${tx.pnl>=0?'#22c97a':'#f0505a'};background:${tx.pnl>=0?'rgba(34,201,122,0.12)':'rgba(240,80,90,0.12)'};padding:2px 8px;border-radius:6px;font-size:0.76rem">${tx.pnl>=0?'+':''}${fmt(Math.abs(pct),2)}%</span>`;
+    }
+    return `<tr class="${rowClass}">
+      <td style="color:var(--text-2);font-size:0.8rem">${tx.date || '—'}</td>
+      <td>${typeLabel[tx.type] || tx.type}</td>
       <td><span class="symbol-badge" style="direction:ltr">${tx.symbol}</span></td>
-      <td style="direction:ltr;text-align:right">${fmtN(tx.shares)}</td>
-      <td style="direction:ltr;text-align:right">$${fmt(tx.price)}</td>
-      <td style="direction:ltr;text-align:right">$${fmt(tx.shares * tx.price)}</td>
-      <td style="direction:ltr;text-align:right">${pnlCell}</td>
+      <td style="direction:ltr;text-align:right">${fmtN(tx.shares || 0)}</td>
+      <td style="direction:ltr;text-align:right">$${fmt(tx.price || 0)}</td>
+      <td style="direction:ltr;text-align:right;font-weight:700">$${fmt((tx.shares || 0) * (tx.price || 0))}</td>
+      <td>${pnlBadge}</td>
+      <td style="direction:ltr;text-align:right">${pnlPctBadge}</td>
       <td style="color:var(--text-3);font-size:0.8rem">${tx.note || '—'}</td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteUsTransaction('${tx.id}')">حذف</button></td>
     </tr>`;
   }).join('');
+
   wrap.innerHTML = `<table>
     <thead><tr>
       <th>التاريخ</th><th>النوع</th><th>الرمز</th><th>الكمية</th>
-      <th>السعر ($)</th><th>الإجمالي ($)</th><th>ر/خ محقق ($)</th><th>ملاحظة</th>
+      <th>السعر ($)</th><th>الإجمالي ($)</th><th>الربح/الخسارة</th><th>النسبة %</th><th>ملاحظة</th><th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
@@ -8102,6 +8222,8 @@ function openUsSellModal(sym) {
   document.getElementById('us-sell-avg').textContent = '$' + fmt(h.avgCost);
   document.getElementById('us-sell-net').textContent = '$0.00';
   document.getElementById('us-sell-pnl').textContent = '$0.00';
+  const pctEl = document.getElementById('us-sell-pnl-pct'); if (pctEl) { pctEl.textContent = '—'; pctEl.style.color = ''; }
+  const vEl = document.getElementById('us-sell-verdict'); if (vEl) vEl.style.display = 'none';
   openModal('modal-us-sell');
 }
 
@@ -8709,6 +8831,14 @@ function initMarkets() {
   const savedMode = localStorage.getItem('portfolio_market_mode') || 'saudi';
   if (savedMode !== 'saudi') switchMarket(savedMode);
   fetchExchangeRate();
+
+  // جلب أسعار السوق الأمريكي تلقائياً عند بدء التشغيل
+  const usSymbols = Object.keys(usState.holdings).filter(s => usState.holdings[s].shares > 0);
+  if (usSymbols.length > 0) {
+    setTimeout(() => refreshAllUsPrices(), 1200);
+  }
+  // جلب مؤشر S&P 500 تلقائياً دائماً
+  setTimeout(() => fetchSPIndex().then(data => { if (data) { spCache = data; renderSpComparison(data, null, null); } }), 2000);
 }
 
 initMarkets();
