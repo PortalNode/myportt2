@@ -1850,9 +1850,7 @@ style="width:100px;padding:0.3rem 0.5rem;background:var(--bg-input);border:1px s
 
 <div class="trade-filter-tabs">
 
-<button id="ttab-all" class="trade-tab active-all" onclick="setTradeTab('all')">📋 كل العمليات</button>
-
-<button id="ttab-win" class="trade-tab" onclick="setTradeTab('win')">🟢 الصفقات الرابحة</button>
+<button id="ttab-win" class="trade-tab active-win" onclick="setTradeTab('win')">🟢 الصفقات الرابحة</button>
 
 <button id="ttab-loss" class="trade-tab" onclick="setTradeTab('loss')">🔴 الصفقات الخاسرة</button>
 
@@ -1890,6 +1888,35 @@ style="width:100px;padding:0.3rem 0.5rem;background:var(--bg-input);border:1px s
 
 <button class="btn btn-primary btn-sm" onclick="openDividendModal()">+ تسجيل توزيع</button>
 
+</div>
+
+<!-- بطاقات إحصاء التوزيعات -->
+<div class="realized-summary-grid" id="div-stats-grid">
+  <div class="rs-card" style="border-color:rgba(232,160,32,0.3)">
+    <div class="rs-label">💰 إجمالي التوزيعات المحققة</div>
+    <div class="rs-value" id="div-total" style="color:var(--accent)">0.00 ر.س</div>
+    <div class="rs-sub" id="div-count">0 توزيع</div>
+  </div>
+  <div class="rs-card">
+    <div class="rs-label">📊 متوسط التوزيع للصفقة</div>
+    <div class="rs-value text-blue" id="div-avg">—</div>
+    <div class="rs-sub">لكل عملية توزيع</div>
+  </div>
+  <div class="rs-card" style="border-color:rgba(34,201,122,0.25)">
+    <div class="rs-label">🏆 أعلى توزيع</div>
+    <div class="rs-value text-green" id="div-max">—</div>
+    <div class="rs-sub" id="div-max-sym">—</div>
+  </div>
+</div>
+
+<!-- فلاتر التوزيعات -->
+<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
+  <select class="form-control" id="div-filter-sym" style="width:auto;padding:0.4rem 0.7rem;font-size:0.82rem" onchange="renderDividends()">
+    <option value="">كل الأسهم</option>
+  </select>
+  <select class="form-control" id="div-filter-year" style="width:auto;padding:0.4rem 0.7rem;font-size:0.82rem" onchange="renderDividends()">
+    <option value="">كل السنوات</option>
+  </select>
 </div>
 
 <div class="table-wrap" id="div-table-wrap">
@@ -2315,8 +2342,7 @@ oninput="saveTasiBaselineSettings()">
 </div>
 <!-- Trade Filter Tabs -->
 <div class="trade-filter-tabs">
-  <button id="us-ttab-all" class="trade-tab active-all" onclick="setUsTradeTab('all')">📋 كل العمليات</button>
-  <button id="us-ttab-win" class="trade-tab" onclick="setUsTradeTab('win')">🟢 الصفقات الرابحة</button>
+  <button id="us-ttab-win" class="trade-tab active-win" onclick="setUsTradeTab('win')">🟢 الصفقات الرابحة</button>
   <button id="us-ttab-loss" class="trade-tab" onclick="setUsTradeTab('loss')">🔴 الصفقات الخاسرة</button>
   <button id="us-ttab-buy" class="trade-tab" onclick="setUsTradeTab('buy')">🛒 الشراء</button>
   <button id="us-ttab-div" class="trade-tab" onclick="setUsTradeTab('div')">💰 التوزيعات</button>
@@ -2331,6 +2357,33 @@ oninput="saveTasiBaselineSettings()">
 <div class="section-header">
   <div class="section-title">إدارة <span>التوزيعات النقدية</span></div>
   <button class="btn btn-primary btn-sm" onclick="openUsDividendModal()">+ تسجيل توزيع</button>
+</div>
+<!-- بطاقات إحصاء التوزيعات -->
+<div class="realized-summary-grid" id="us-div-stats-grid">
+  <div class="rs-card" style="border-color:rgba(232,160,32,0.3)">
+    <div class="rs-label">💰 إجمالي التوزيعات المحققة</div>
+    <div class="rs-value" id="us-div-total" style="color:var(--accent)">$0.00</div>
+    <div class="rs-sub" id="us-div-count">0 توزيع</div>
+  </div>
+  <div class="rs-card">
+    <div class="rs-label">📊 متوسط التوزيع للصفقة</div>
+    <div class="rs-value text-blue" id="us-div-avg">—</div>
+    <div class="rs-sub">لكل عملية توزيع</div>
+  </div>
+  <div class="rs-card" style="border-color:rgba(34,201,122,0.25)">
+    <div class="rs-label">🏆 أعلى توزيع</div>
+    <div class="rs-value text-green" id="us-div-max">—</div>
+    <div class="rs-sub" id="us-div-max-sym">—</div>
+  </div>
+</div>
+<!-- فلاتر التوزيعات -->
+<div style="display:flex;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
+  <select class="form-control" id="us-div-filter-sym" style="width:auto;padding:0.4rem 0.7rem;font-size:0.82rem" onchange="renderUsDividends()">
+    <option value="">كل الأسهم</option>
+  </select>
+  <select class="form-control" id="us-div-filter-year" style="width:auto;padding:0.4rem 0.7rem;font-size:0.82rem" onchange="renderUsDividends()">
+    <option value="">كل السنوات</option>
+  </select>
 </div>
 <div class="table-wrap" id="us-div-table-wrap">
   <div class="empty-state"><div class="icon">🏦</div><p>لا توجد توزيعات مسجلة</p><button class="btn btn-primary" onclick="openUsDividendModal()">+ سجّل أول توزيع</button></div>
@@ -3640,6 +3693,8 @@ const SAUDI_STOCKS = {
 
 "7204":"توبي",
 
+"7205":"دار البلد",
+
 "7211":"عزم",
 
 "8010":"التعاونية",
@@ -4217,6 +4272,8 @@ const SAUDI_SECTORS = {
 "7203":"الإتصالات وتقنية المعلومات",
 
 "7204":"الإتصالات وتقنية المعلومات",
+
+"7205":"الإتصالات وتقنية المعلومات",
 
 "7211":"الإتصالات وتقنية المعلومات",
 
@@ -5632,8 +5689,6 @@ if (filterSym) txs = txs.filter(t => t.symbol === filterSym);
 
 txs.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-
-
 if (txs.length === 0) {
 
 let emptyMsg = 'لا توجد عمليات مسجلة';
@@ -5648,7 +5703,67 @@ return;
 
 }
 
+// عرض مخصص لتبويب الشراء
+if (_tradeTab === 'buy') {
+  const rows = txs.map(t => `<tr>
+    <td style="color:var(--text-2);font-size:0.8rem">${t.date}</td>
+    <td><span class="symbol-badge">${t.symbol}</span></td>
+    <td style="font-size:0.8rem;color:var(--text-2)">${SAUDI_STOCKS[t.symbol]||''}</td>
+    <td style="direction:ltr;text-align:right">${fmtN(t.shares||0)}</td>
+    <td style="direction:ltr;text-align:right">${t.price ? fmt(t.price) : '—'} ر.س</td>
+    <td style="direction:ltr;text-align:right;font-weight:700">${t.total ? fmt(t.total) : '—'} ر.س</td>
+    <td style="color:var(--text-3);font-size:0.8rem">${t.note||'—'}</td>
+    <td><button class="btn btn-red btn-sm" onclick="deleteTransaction('${t.id}')">حذف</button></td>
+  </tr>`).join('');
+  wrap.innerHTML = `<table><thead><tr>
+    <th>التاريخ</th><th>الرمز</th><th>السهم</th><th>الكمية</th><th>سعر الشراء</th><th>الإجمالي</th><th>ملاحظة</th><th></th>
+  </tr></thead><tbody>${rows}</tbody></table>`;
+  return;
+}
 
+// عرض مخصص لتبويبي الرابحة والخاسرة
+if (_tradeTab === 'win' || _tradeTab === 'loss') {
+  const rows = txs.map(t => {
+    const avgCost = t.avgCost != null ? t.avgCost : (t.pnl != null ? ((t.shares * t.price - (t.commission||0) - t.pnl) / t.shares) : null);
+    const cost = avgCost != null ? avgCost * t.shares : null;
+    const pct = cost > 0 ? (t.pnl / cost) * 100 : 0;
+    const clr = t.pnl >= 0 ? '#22c97a' : '#f0505a';
+    const bg = t.pnl >= 0 ? 'rgba(34,201,122,0.12)' : 'rgba(240,80,90,0.12)';
+    const rowClass = t.pnl > 0 ? 'row-win' : 'row-loss';
+
+    // حساب تاريخ الشراء ومدة الاحتفاظ
+    const prevBuys = state.transactions.filter(x => x.type === 'buy' && x.symbol === t.symbol && x.date <= t.date);
+    const buyDate = prevBuys.length > 0 ? prevBuys[prevBuys.length - 1].date : '—';
+    let holdDays = '—';
+    if (buyDate !== '—') {
+      const diff = Math.round((new Date(t.date) - new Date(buyDate)) / 86400000);
+      holdDays = diff > 0 ? diff + ' يوم' : 'نفس اليوم';
+    }
+
+    return `<tr class="${rowClass}">
+      <td style="color:var(--text-2);font-size:0.8rem">${buyDate}</td>
+      <td style="color:var(--text-2);font-size:0.8rem">${t.date}</td>
+      <td style="font-size:0.78rem;color:var(--blue)">${holdDays}</td>
+      <td><span class="symbol-badge">${t.symbol}</span></td>
+      <td style="font-size:0.8rem;color:var(--text-2)">${SAUDI_STOCKS[t.symbol]||''}</td>
+      <td style="direction:ltr;text-align:right">${fmtN(t.shares||0)}</td>
+      <td style="direction:ltr;text-align:right">${avgCost != null ? fmt(avgCost) : '—'} ر.س</td>
+      <td style="direction:ltr;text-align:right">${fmt(t.price)} ر.س</td>
+      <td style="direction:ltr;text-align:right"><span style="padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:700;background:${bg};color:${clr}">${t.pnl>=0?'▲ +':'▼ '}${fmt(Math.abs(t.pnl))} ر.س</span></td>
+      <td style="direction:ltr;text-align:right"><span style="padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:700;background:${bg};color:${clr}">${t.pnl>=0?'+':''}${fmt(Math.abs(pct),2)}%</span></td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteTransaction('${t.id}')">حذف</button></td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `<table>
+    <thead><tr>
+      <th>تاريخ الشراء</th><th>تاريخ البيع</th><th>مدة الاحتفاظ</th><th>الرمز</th><th>السهم</th>
+      <th>الكمية</th><th>سعر الشراء</th><th>سعر البيع</th><th>الربح/الخسارة</th><th>النسبة %</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+  return;
+}
 
 const typeLabel = {
 
@@ -5755,73 +5870,73 @@ wrap.innerHTML = `
 function renderDividends() {
 
 const wrap = document.getElementById('div-table-wrap');
+const allDivs = [...state.dividends];
 
-const divs = [...state.dividends].sort((a, b) => new Date(b.payDate) - new Date(a.payDate));
+// تحديث بطاقات الإحصاء
+const total = allDivs.reduce((s, d) => s + (d.totalAmount||0), 0);
+const avg = allDivs.length > 0 ? total / allDivs.length : null;
+const maxDiv = allDivs.length > 0 ? allDivs.reduce((a, b) => (b.totalAmount||0) > (a.totalAmount||0) ? b : a) : null;
+const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+setEl('div-total', fmt(total) + ' ر.س');
+setEl('div-count', allDivs.length + ' توزيع');
+setEl('div-avg', avg != null ? fmt(avg) + ' ر.س' : '—');
+setEl('div-max', maxDiv ? fmt(maxDiv.totalAmount) + ' ر.س' : '—');
+setEl('div-max-sym', maxDiv ? (SAUDI_STOCKS[maxDiv.symbol]||maxDiv.symbol) : '—');
 
-
-
-if (divs.length === 0) {
-
-wrap.innerHTML = `<div class="empty-state"><div class="icon">🏦</div><p>لا توجد توزيعات مسجلة</p><button class="btn btn-primary" onclick="openDividendModal()">+ سجّل أول توزيع</button></div>`;
-
-return;
-
+// تحديث فلاتر السهم والسنة
+const symSel = document.getElementById('div-filter-sym');
+const yearSel = document.getElementById('div-filter-year');
+if (symSel) {
+  const cur = symSel.value;
+  const syms = [...new Set(allDivs.map(d => d.symbol))].sort();
+  symSel.innerHTML = '<option value="">كل الأسهم</option>' + syms.map(s => `<option value="${s}" ${s===cur?'selected':''}>${s} — ${SAUDI_STOCKS[s]||s}</option>`).join('');
+}
+if (yearSel) {
+  const cur = yearSel.value;
+  const years = [...new Set(allDivs.map(d => (d.payDate||d.exDate||'').slice(0,4)).filter(Boolean))].sort().reverse();
+  yearSel.innerHTML = '<option value="">كل السنوات</option>' + years.map(y => `<option value="${y}" ${y===cur?'selected':''}>${y}</option>`).join('');
 }
 
+// تطبيق الفلاتر
+const filterSym = symSel?.value || '';
+const filterYear = yearSel?.value || '';
+let divs = allDivs.filter(d => {
+  if (filterSym && d.symbol !== filterSym) return false;
+  if (filterYear && !(d.payDate||d.exDate||'').startsWith(filterYear)) return false;
+  return true;
+}).sort((a, b) => new Date(b.payDate||b.exDate) - new Date(a.payDate||a.exDate));
 
+if (divs.length === 0) {
+  wrap.innerHTML = `<div class="empty-state"><div class="icon">🏦</div><p>لا توجد توزيعات مسجلة</p><button class="btn btn-primary" onclick="openDividendModal()">+ سجّل أول توزيع</button></div>`;
+  return;
+}
 
 const rows = divs.map(d => {
-
-const reinvestBadge = d.reinvested ? `<span class="badge badge-blue">إعادة استثمار</span>` : `<span class="badge badge-gold">نقدي</span>`;
-
-return `
-
-<tr>
-
-<td style="color:var(--text-2);font-size:0.8rem">${d.payDate || d.exDate}</td>
-
-<td><span class="symbol-badge">${d.symbol}</span></td>
-
-<td style="font-size:0.8rem;color:var(--text-2)">${SAUDI_STOCKS[d.symbol]||''}</td>
-
-<td style="direction:ltr;text-align:right">${fmtN(d.eligibleShares)}</td>
-
-<td style="direction:ltr;text-align:right">${fmt(d.perShare)}</td>
-
-<td style="direction:ltr;text-align:right;font-weight:700;color:var(--accent)">${fmt(d.totalAmount)}</td>
-
-<td>${reinvestBadge}</td>
-
-<td style="color:var(--text-2);font-size:0.78rem">${d.reinvested ? `+${fmtN(d.addedShares)} سهم بسعر ${fmt(d.reinvestPrice)}` : ''}</td>
-
-<td>
-
-<button class="btn btn-red btn-sm" onclick="deleteDividend('${d.id}')">حذف</button>
-
-</td>
-
-</tr>`;
-
+  const reinvestBadge = d.reinvested ? `<span class="badge badge-blue">إعادة استثمار</span>` : `<span class="badge badge-gold">نقدي</span>`;
+  const avgCost = state.holdings[d.symbol]?.avgCost;
+  const yoc = (avgCost && avgCost > 0 && d.perShare) ? (d.perShare / avgCost * 100) : null;
+  const yocCell = yoc != null ? `<span style="color:var(--accent);font-weight:700">${fmt(yoc,2)}%</span>` : '—';
+  return `<tr>
+    <td style="color:var(--text-2);font-size:0.8rem">${d.payDate || d.exDate}</td>
+    <td><span class="symbol-badge">${d.symbol}</span></td>
+    <td style="font-size:0.8rem;color:var(--text-2)">${SAUDI_STOCKS[d.symbol]||''}</td>
+    <td style="direction:ltr;text-align:right">${fmtN(d.eligibleShares)}</td>
+    <td style="direction:ltr;text-align:right">${fmt(d.perShare)}</td>
+    <td style="direction:ltr;text-align:right;font-weight:700;color:var(--accent)">${fmt(d.totalAmount)}</td>
+    <td style="direction:ltr;text-align:right">${yocCell}</td>
+    <td>${reinvestBadge}</td>
+    <td style="color:var(--text-2);font-size:0.78rem">${d.reinvested ? `+${fmtN(d.addedShares)} سهم بسعر ${fmt(d.reinvestPrice)}` : ''}</td>
+    <td><button class="btn btn-red btn-sm" onclick="deleteDividend('${d.id}')">حذف</button></td>
+  </tr>`;
 }).join('');
 
-
-
-wrap.innerHTML = `
-
-<table>
-
-<thead><tr>
-
-<th>التاريخ</th><th>الرمز</th><th>السهم</th>
-
-<th>الأسهم المؤهلة</th><th>للسهم (ر.س)</th><th>الإجمالي (ر.س)</th>
-
-<th>النوع</th><th>تفاصيل</th><th></th>
-
-</tr></thead>
-
-<tbody>${rows}</tbody>
-
+wrap.innerHTML = `<table>
+  <thead><tr>
+    <th>التاريخ</th><th>الرمز</th><th>السهم</th>
+    <th>الأسهم المؤهلة</th><th>للسهم (ر.س)</th><th>الإجمالي (ر.س)</th>
+    <th>العائد على التكلفة</th><th>النوع</th><th>تفاصيل</th><th></th>
+  </tr></thead>
+  <tbody>${rows}</tbody>
 </table>`;
 
 }
@@ -6211,6 +6326,8 @@ commission,
 total: net,
 
 pnl: net - cost,
+
+avgCost: h.avgCost,
 
 date,
 
@@ -7478,7 +7595,7 @@ if (alphaSub) { alphaSub.textContent = 'أدخل بيانات المقارنة';
 
 // ========================================================
 
-let _tradeTab = 'all'; // 'all' | 'win' | 'loss' | 'buy' | 'div'
+let _tradeTab = 'win'; // 'win' | 'loss' | 'buy' | 'div'
 
 
 
@@ -7486,7 +7603,7 @@ function setTradeTab(tab) {
 
 _tradeTab = tab;
 
-['all','win','loss','buy','div'].forEach(t => {
+['win','loss','buy','div'].forEach(t => {
 
 const el = document.getElementById('ttab-' + t);
 
@@ -8038,11 +8155,11 @@ function renderUsTableInto(wrap, symbols, compact) {
   </table>`;
 }
 
-let _usTradeTab = 'all';
+let _usTradeTab = 'win';
 
 function setUsTradeTab(tab) {
   _usTradeTab = tab;
-  ['all','win','loss','buy','div'].forEach(t => {
+  ['win','loss','buy','div'].forEach(t => {
     const el = document.getElementById('us-ttab-' + t);
     if (!el) return;
     el.className = 'trade-tab';
@@ -8125,6 +8242,65 @@ function renderUsTransactions() {
     sell: '<span class="tx-chip tx-sell">🔴 بيع</span>',
     dividend: '<span class="tx-chip tx-dividend">💰 توزيع</span>'
   };
+
+  // عرض مخصص لتبويب الشراء
+  if (_usTradeTab === 'buy') {
+    const rows = txs.map(tx => `<tr>
+      <td style="color:var(--text-2);font-size:0.8rem">${tx.date||'—'}</td>
+      <td><span class="symbol-badge" style="direction:ltr">${tx.symbol}</span></td>
+      <td style="direction:ltr;text-align:right">${fmtN(tx.shares||0)}</td>
+      <td style="direction:ltr;text-align:right">$${fmt(tx.price||0)}</td>
+      <td style="direction:ltr;text-align:right;font-weight:700">$${fmt((tx.shares||0)*(tx.price||0))}</td>
+      <td style="color:var(--text-3);font-size:0.8rem">${tx.note||'—'}</td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteUsTransaction('${tx.id}')">حذف</button></td>
+    </tr>`).join('');
+    wrap.innerHTML = `<table><thead><tr>
+      <th>التاريخ</th><th>الرمز</th><th>الكمية</th><th>سعر الشراء ($)</th><th>الإجمالي ($)</th><th>ملاحظة</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+    return;
+  }
+
+  // عرض مخصص لتبويبي الرابحة والخاسرة
+  if (_usTradeTab === 'win' || _usTradeTab === 'loss') {
+    const rows = txs.map(tx => {
+      const avgCost = tx.avgCost != null ? tx.avgCost : (tx.pnl != null ? ((tx.shares * tx.price - (tx.commission||0) - tx.pnl) / tx.shares) : null);
+      const cost = avgCost != null ? avgCost * tx.shares : null;
+      const pct = cost > 0 ? (tx.pnl / cost) * 100 : 0;
+      const clr = tx.pnl >= 0 ? '#22c97a' : '#f0505a';
+      const bg = tx.pnl >= 0 ? 'rgba(34,201,122,0.12)' : 'rgba(240,80,90,0.12)';
+      const rowClass = tx.pnl > 0 ? 'row-win' : 'row-loss';
+
+      const prevBuys = usState.transactions.filter(x => x.type === 'buy' && x.symbol === tx.symbol && x.date <= tx.date);
+      const buyDate = prevBuys.length > 0 ? prevBuys[prevBuys.length - 1].date : '—';
+      let holdDays = '—';
+      if (buyDate !== '—') {
+        const diff = Math.round((new Date(tx.date) - new Date(buyDate)) / 86400000);
+        holdDays = diff > 0 ? diff + ' يوم' : 'نفس اليوم';
+      }
+
+      return `<tr class="${rowClass}">
+        <td style="color:var(--text-2);font-size:0.8rem">${buyDate}</td>
+        <td style="color:var(--text-2);font-size:0.8rem">${tx.date || '—'}</td>
+        <td style="font-size:0.78rem;color:var(--blue)">${holdDays}</td>
+        <td><span class="symbol-badge" style="direction:ltr">${tx.symbol}</span></td>
+        <td style="direction:ltr;text-align:right">${fmtN(tx.shares||0)}</td>
+        <td style="direction:ltr;text-align:right">$${avgCost != null ? fmt(avgCost) : '—'}</td>
+        <td style="direction:ltr;text-align:right">$${fmt(tx.price||0)}</td>
+        <td style="direction:ltr;text-align:right"><span style="padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:700;background:${bg};color:${clr}">${tx.pnl>=0?'▲ +$':'▼ -$'}${fmt(Math.abs(tx.pnl))}</span></td>
+        <td style="direction:ltr;text-align:right"><span style="padding:2px 8px;border-radius:6px;font-size:0.76rem;font-weight:700;background:${bg};color:${clr}">${tx.pnl>=0?'+':''}${fmt(Math.abs(pct),2)}%</span></td>
+        <td><button class="btn btn-red btn-sm" onclick="deleteUsTransaction('${tx.id}')">حذف</button></td>
+      </tr>`;
+    }).join('');
+
+    wrap.innerHTML = `<table>
+      <thead><tr>
+        <th>تاريخ الشراء</th><th>تاريخ البيع</th><th>مدة الاحتفاظ</th><th>الرمز</th>
+        <th>الكمية</th><th>سعر الشراء ($)</th><th>سعر البيع ($)</th><th>الربح/الخسارة</th><th>النسبة %</th><th></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+    return;
+  }
 
   const rows = txs.map(tx => {
     const rowClass = tx.type === 'sell' && tx.pnl != null ? (tx.pnl > 0 ? 'row-win' : 'row-loss') : '';
@@ -8285,7 +8461,7 @@ function confirmUsSell() {
   const pnl = net - shares * h.avgCost;
   h.shares -= shares;
   if (h.shares <= 0) delete usState.holdings[sym];
-  usState.transactions.push({ id: uid(), type: 'sell', symbol: sym, shares, price, commission: comm, date, pnl });
+  usState.transactions.push({ id: uid(), type: 'sell', symbol: sym, shares, price, commission: comm, date, pnl, avgCost: h.avgCost });
   usState.cash += net;
   saveUsState();
   closeModal('modal-us-sell');
@@ -8733,22 +8909,68 @@ function confirmUsDividend() {
 function renderUsDividends() {
   const wrap = document.getElementById('us-div-table-wrap');
   if (!wrap) return;
-  const divs = [...(usState.dividends || [])].reverse();
+  const allDivs = usState.dividends || [];
+
+  // بطاقات الإحصاء
+  const total = allDivs.reduce((s, d) => s + (d.totalAmount||0), 0);
+  const avg = allDivs.length > 0 ? total / allDivs.length : null;
+  const maxDiv = allDivs.length > 0 ? allDivs.reduce((a, b) => (b.totalAmount||0) > (a.totalAmount||0) ? b : a) : null;
+  const setEl = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setEl('us-div-total', '$' + fmt(total));
+  setEl('us-div-count', allDivs.length + ' توزيع');
+  setEl('us-div-avg', avg != null ? '$' + fmt(avg) : '—');
+  setEl('us-div-max', maxDiv ? '$' + fmt(maxDiv.totalAmount) : '—');
+  setEl('us-div-max-sym', maxDiv ? maxDiv.symbol : '—');
+
+  // فلاتر السهم والسنة
+  const symSel = document.getElementById('us-div-filter-sym');
+  const yearSel = document.getElementById('us-div-filter-year');
+  if (symSel) {
+    const cur = symSel.value;
+    const syms = [...new Set(allDivs.map(d => d.symbol))].sort();
+    symSel.innerHTML = '<option value="">كل الأسهم</option>' + syms.map(s => `<option value="${s}" ${s===cur?'selected':''}>${s}</option>`).join('');
+  }
+  if (yearSel) {
+    const cur = yearSel.value;
+    const years = [...new Set(allDivs.map(d => (d.date||'').slice(0,4)).filter(Boolean))].sort().reverse();
+    yearSel.innerHTML = '<option value="">كل السنوات</option>' + years.map(y => `<option value="${y}" ${y===cur?'selected':''}>${y}</option>`).join('');
+  }
+
+  // تطبيق الفلاتر
+  const filterSym = symSel?.value || '';
+  const filterYear = yearSel?.value || '';
+  let divs = allDivs.filter(d => {
+    if (filterSym && d.symbol !== filterSym) return false;
+    if (filterYear && !(d.date||'').startsWith(filterYear)) return false;
+    return true;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
+
   if (!divs.length) {
     wrap.innerHTML = `<div class="empty-state"><div class="icon">🏦</div><p>لا توجد توزيعات مسجلة</p><button class="btn btn-primary" onclick="openUsDividendModal()">+ سجّل أول توزيع</button></div>`;
     return;
   }
-  const rows = divs.map(d => `<tr>
-    <td>${d.date || '—'}</td>
-    <td><span class="symbol-badge" style="direction:ltr">${d.symbol}</span></td>
-    <td style="direction:ltr;text-align:right">${fmtN(d.shares)}</td>
-    <td style="direction:ltr;text-align:right">$${fmt(d.perShare)}</td>
-    <td style="direction:ltr;text-align:right;color:var(--green);font-weight:700">$${fmt(d.totalAmount)}</td>
-    <td style="color:var(--text-3);font-size:0.8rem">${d.note || '—'}</td>
-    <td><button class="btn btn-sm" style="background:rgba(240,80,90,0.08);color:#f0505a;border:1px solid rgba(240,80,90,0.2)" onclick="deleteUsDividend('${d.id}')">🗑</button></td>
-  </tr>`).join('');
+
+  const rows = divs.map(d => {
+    const avgCost = usState.holdings[d.symbol]?.avgCost;
+    const yoc = (avgCost && avgCost > 0 && d.perShare) ? (d.perShare / avgCost * 100) : null;
+    const yocCell = yoc != null ? `<span style="color:var(--accent);font-weight:700">${fmt(yoc,2)}%</span>` : '—';
+    return `<tr>
+      <td style="color:var(--text-2);font-size:0.8rem">${d.date||'—'}</td>
+      <td><span class="symbol-badge" style="direction:ltr">${d.symbol}</span></td>
+      <td style="direction:ltr;text-align:right">${fmtN(d.shares)}</td>
+      <td style="direction:ltr;text-align:right">$${fmt(d.perShare)}</td>
+      <td style="direction:ltr;text-align:right;color:var(--green);font-weight:700">$${fmt(d.totalAmount)}</td>
+      <td style="direction:ltr;text-align:right">${yocCell}</td>
+      <td style="color:var(--text-3);font-size:0.8rem">${d.note||'—'}</td>
+      <td><button class="btn btn-red btn-sm" onclick="deleteUsDividend('${d.id}')">حذف</button></td>
+    </tr>`;
+  }).join('');
+
   wrap.innerHTML = `<table>
-    <thead><tr><th>التاريخ</th><th>الرمز</th><th>الكمية</th><th>للسهم ($)</th><th>الإجمالي ($)</th><th>ملاحظة</th><th>حذف</th></tr></thead>
+    <thead><tr>
+      <th>التاريخ</th><th>الرمز</th><th>الكمية</th><th>للسهم ($)</th>
+      <th>الإجمالي ($)</th><th>العائد على التكلفة</th><th>ملاحظة</th><th></th>
+    </tr></thead>
     <tbody>${rows}</tbody>
   </table>`;
 }
