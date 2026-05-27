@@ -2074,18 +2074,13 @@ oninput="saveTasiBaselineSettings()">
 
 <div class="section-title mb-3">📦 تصدير واستيراد البيانات</div>
 
-<div style="margin-bottom:0.75rem">
-  <button class="btn btn-primary w-full" onclick="exportAllData()">💾 نسخة احتياطية شاملة (السعودي + الأمريكي)</button>
-  <p class="form-hint mt-1">يشمل كل البيانات: المحفظتين + الإعدادات + مفتاح API</p>
-</div>
-
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
 
 <div>
 
-<button class="btn btn-ghost w-full" onclick="exportData()">⬇️ تصدير JSON (سعودي)</button>
+<button class="btn btn-ghost w-full" onclick="exportData()">⬇️ تصدير JSON</button>
 
-<p class="form-hint mt-1">تصدير بيانات السوق السعودي فقط</p>
+<p class="form-hint mt-1">تصدير كافة بياناتك ومحفظتك كملف JSON</p>
 
 </div>
 
@@ -2095,11 +2090,11 @@ oninput="saveTasiBaselineSettings()">
 
 ⬆️ استيراد JSON
 
-<input type="file" accept=".json" onchange="importAllData(event)" style="display:none">
+<input type="file" accept=".json" onchange="importData(event)" style="display:none">
 
 </label>
 
-<p class="form-hint mt-1">استيراد نسخة احتياطية (شاملة أو سعودي فقط)</p>
+<p class="form-hint mt-1">استيراد بيانات محفوظة مسبقاً</p>
 
 </div>
 
@@ -3028,7 +3023,12 @@ oninput="saveTasiBaselineSettings()">
       <span class="text-muted">الربح / الخسارة المحقق</span>
       <span class="font-bold" id="us-sell-pnl">$0.00</span>
     </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-top:0.3rem">
+      <span class="text-muted">نسبة العائد</span>
+      <span class="font-bold" id="us-sell-pnl-pct">—</span>
+    </div>
   </div>
+  <div id="us-sell-verdict" style="display:none;margin-top:0.6rem;padding:0.5rem 0.75rem;border-radius:7px;font-size:0.82rem;font-weight:700;text-align:center"></div>
   <input type="hidden" id="us-sell-symbol">
   <div style="display:flex;gap:0.6rem;margin-top:1.25rem">
     <button class="btn btn-red w-full" onclick="confirmUsSell()">✔ تأكيد البيع</button>
@@ -3678,11 +3678,7 @@ const SAUDI_STOCKS = {
 
 "9411":"صندوق الأول للاستثمار هونج كونج",
 
-"9412":"البلاد إم إس سي آي المتداول للأسهم السعودية",
-
-"7205":"دار البلد"
-
-
+"9412":"البلاد إم إس سي آي المتداول للأسهم السعودية"
 
 };
 
@@ -4181,8 +4177,6 @@ const SAUDI_SECTORS = {
 "7203":"الإتصالات وتقنية المعلومات",
 
 "7204":"الإتصالات وتقنية المعلومات",
-
-"7205":"الإتصالات وتقنية المعلومات",
 
 "7211":"الإتصالات وتقنية المعلومات",
 
@@ -6744,83 +6738,6 @@ e.target.value = '';
 
 
 
-// ========================================================
-// FULL BACKUP — يشمل السوق السعودي والأمريكي ومفتاح API
-// ========================================================
-
-function exportAllData() {
-  const allData = {
-    version: '3.0',
-    exportedAt: new Date().toISOString(),
-    saudi: { ...state },
-    us: { ...usState },
-    meta: {
-      sahmkKey: localStorage.getItem('tasi_sahmk_key') || '',
-      marketMode: localStorage.getItem('portfolio_market_mode') || 'saudi'
-    }
-  };
-  const json = JSON.stringify(allData, null, 2);
-  const blob = new Blob([json], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `portfolio-full-backup-${today()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  showToast('✅ تم تصدير النسخة الاحتياطية الشاملة', 'success');
-}
-
-function importAllData(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    try {
-      const data = JSON.parse(ev.target.result);
-
-      // نسخة شاملة (v3)
-      if (data.version === '3.0' && data.saudi && data.us) {
-        if (!confirm('هل تريد استعادة النسخة الاحتياطية الشاملة؟ سيتم استبدال البيانات الحالية.')) return;
-        if (data.saudi.holdings) Object.assign(state.holdings, data.saudi.holdings);
-        if (data.saudi.transactions) state.transactions = [...state.transactions, ...data.saudi.transactions.filter(t => !state.transactions.find(ex => ex.id === t.id))];
-        if (data.saudi.dividends) state.dividends = [...state.dividends, ...data.saudi.dividends.filter(d => !state.dividends.find(ex => ex.id === d.id))];
-        if (data.saudi.cash != null) state.cash = data.saudi.cash;
-        if (data.saudi.settings) Object.assign(state.settings, data.saudi.settings);
-        saveState();
-        renderAll();
-        usState = { ...usState, ...data.us };
-        saveUsState();
-        renderUsAll();
-        if (data.meta?.sahmkKey) {
-          localStorage.setItem('tasi_sahmk_key', data.meta.sahmkKey);
-          sahmkApiKey = data.meta.sahmkKey;
-        }
-        if (data.meta?.marketMode) localStorage.setItem('portfolio_market_mode', data.meta.marketMode);
-        showToast('✅ تم استعادة النسخة الاحتياطية الشاملة بنجاح', 'success');
-
-      // نسخة قديمة — سعودي فقط (v2)
-      } else if (data.holdings || data.transactions) {
-        if (!confirm('هل تريد استيراد البيانات؟ سيتم الدمج مع البيانات الحالية')) return;
-        if (data.holdings) Object.assign(state.holdings, data.holdings);
-        if (data.transactions) state.transactions = [...state.transactions, ...data.transactions.filter(t => !state.transactions.find(ex => ex.id === t.id))];
-        if (data.dividends) state.dividends = [...state.dividends, ...data.dividends.filter(d => !state.dividends.find(ex => ex.id === d.id))];
-        if (data.cash != null) state.cash = data.cash;
-        if (data.settings) Object.assign(state.settings, data.settings);
-        saveState();
-        renderAll();
-        showToast('✅ تم استيراد البيانات بنجاح', 'success');
-      } else {
-        throw new Error('صيغة الملف غير معروفة');
-      }
-
-    } catch(err) {
-      showToast('❌ خطأ في قراءة الملف: ' + err.message, 'error');
-    }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-}
-
 function clearAllData() {
 
 if (!confirm('تحذير! سيتم حذف جميع بياناتك نهائياً. هل أنت متأكد؟')) return;
@@ -7784,9 +7701,7 @@ if (symbols.length > 0) {
 setTimeout(() => refreshAllPrices(), 800);
 
 setTimeout(() => fetchTasiIndex().then(d => { if(d) renderTasiComparison(d); }), 2500);
-// تحديث الأسهم الأمريكية و S&P 500 تلقائياً عند الدخول
-setTimeout(() => refreshAllUsPrices(), 1200);
-setTimeout(() => fetchAndRenderSP(), 1500);
+
 } else if (sahmkApiKey) {
 
 setTimeout(() => fetchTasiIndex().then(d => { if(d) renderTasiComparison(d); }), 1000);
@@ -8199,11 +8114,38 @@ function calcUsSellTotal() {
   if (!h) return;
   const gross = shares * price;
   const net = gross - comm;
-  const pnl = net - (shares * h.avgCost);
+  const cost = shares * h.avgCost;
+  const pnl = net - cost;
+  const pnlPct = cost > 0 ? (pnl / cost) * 100 : 0;
   const netEl = document.getElementById('us-sell-net');
   const pnlEl = document.getElementById('us-sell-pnl');
+  const pctEl = document.getElementById('us-sell-pnl-pct');
+  const verdict = document.getElementById('us-sell-verdict');
   if (netEl) netEl.textContent = '$' + fmt(net);
-  if (pnlEl) { pnlEl.textContent = (pnl >= 0 ? '+$' : '-$') + fmt(Math.abs(pnl)); pnlEl.className = 'font-bold ' + (pnl >= 0 ? 'text-green' : 'text-red'); }
+  if (pnlEl) {
+    pnlEl.textContent = (pnl >= 0 ? '+$' : '-$') + fmt(Math.abs(pnl));
+    pnlEl.className = 'font-bold ' + (pnl >= 0 ? 'text-green' : 'text-red');
+  }
+  if (pctEl) {
+    pctEl.textContent = shares > 0 && price > 0 ? (pnlPct >= 0 ? '+' : '') + fmt(pnlPct, 2) + '%' : '—';
+    pctEl.style.color = pnl >= 0 ? '#22c97a' : '#f0505a';
+    pctEl.style.fontWeight = '700';
+  }
+  if (verdict && shares > 0 && price > 0) {
+    verdict.style.display = 'block';
+    if (pnl > 0) {
+      verdict.style.cssText = 'display:block;margin-top:.6rem;padding:.5rem .75rem;border-radius:7px;font-size:.82rem;font-weight:700;text-align:center;background:rgba(34,201,122,.12);color:#22c97a;border:1px solid rgba(34,201,122,.3)';
+      verdict.textContent = `🎉 صفقة رابحة — ربحت $${fmt(Math.abs(pnl))} (${fmt(pnlPct, 2)}%)`;
+    } else if (pnl < 0) {
+      verdict.style.cssText = 'display:block;margin-top:.6rem;padding:.5rem .75rem;border-radius:7px;font-size:.82rem;font-weight:700;text-align:center;background:rgba(240,80,90,.12);color:#f0505a;border:1px solid rgba(240,80,90,.3)';
+      verdict.textContent = `📉 صفقة خاسرة — خسرت $${fmt(Math.abs(pnl))} (${fmt(Math.abs(pnlPct), 2)}%)`;
+    } else {
+      verdict.style.cssText = 'display:block;margin-top:.6rem;padding:.5rem .75rem;border-radius:7px;font-size:.82rem;font-weight:700;text-align:center;background:rgba(150,150,150,.1);color:var(--text-2);border:1px solid rgba(150,150,150,.2)';
+      verdict.textContent = '➖ تعادل — لا ربح ولا خسارة';
+    }
+  } else if (verdict) {
+    verdict.style.display = 'none';
+  }
 }
 
 function confirmUsSell() {
